@@ -1,0 +1,30 @@
+# Локальный стенд: Postgres + координационный сервис.
+# Только безопасные значения по умолчанию; переопределения — в .env.
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: coord
+      POSTGRES_PASSWORD: coord_local
+      POSTGRES_DB: coord
+    ports: ["5432:5432"]
+    volumes: [pgdata:/var/lib/postgresql/data]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U coord -d coord"]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  coord:
+    build: .
+    image: smp-coord:local
+    environment:
+      HTTP_ADDR: ":8080"
+      DSN: "postgres://coord:coord_local@postgres:5432/coord?sslmode=disable"
+    ports: ["8080:8080"]
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
