@@ -426,3 +426,20 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# Go
+bin/
+*.exe
+*.test
+*.out
+coverage.out
+coverage.html
+.env
+.env.*
+!.env.example
+vendor/
+
+# Сгенерированная документация (make swagger, make docs)
+/api/
+/site/
+/_site/

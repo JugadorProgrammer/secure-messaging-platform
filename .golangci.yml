@@ -1,0 +1,261 @@
+version: "2"
+
+run:
+  tests: true
+
+linters:
+  # standard: errcheck, govet, ineffassign, staticcheck, unused
+  default: standard
+  enable:
+    # Безопасность и корректность
+    - bidichk # Опасные unicode-символы
+    - bodyclose # Незакрытый resp.Body
+    - contextcheck # Потерянный или подменённый context
+    - copyloopvar # Копии переменных цикла (Go 1.22+)
+    - durationcheck # Умножение time.Duration на time.Duration
+    - errchkjson # Необработанные ошибки encoding/json
+    - errorlint # errors.Is/As и %w вместо == и %v
+    - forcetypeassert # Type assertion без проверки ok
+    - gosec # Проверки безопасности
+    - makezero # append в слайс, созданный make с длиной
+    - nilerr # return nil при err != nil
+    - nilnil # return nil, nil
+    - noctx # HTTP-запросы и SQL без context
+    - reassign # Переприсваивание переменных других пакетов (io.EOF и т.п.)
+    - rowserrcheck # Не проверен rows.Err()
+    - sqlclosecheck # Незакрытые rows/stmt
+    - musttag # Структуры для JSON без тегов
+    - wastedassign # Присваивания, которые не используются
+
+    # Архитектура
+    - depguard # Запрещённые зависимости между слоями (contracts.md, раздел 1)
+
+    # Стиль и читаемость
+    - decorder # Порядок объявлений
+    - dupl # Дублирование кода
+    - errname # Имена ошибок: ErrXxx / XxxError
+    - funlen # Длина функций
+    - goconst # Повторяющиеся строки
+    - gocritic # Мета-линтер
+    - gocyclo # Цикломатическая сложность
+    - goprintffuncname # Имена printf-функций оканчиваются на f
+    - lll # Длина строк
+    - misspell # Орфография в английских комментариях
+    - nestif # Глубина вложенности if
+    - nolintlint # Корректность директив //nolint
+    - predeclared # Переопределение встроенных идентификаторов
+    - revive # Замена golint
+    - thelper # t.Helper() во вспомогательных функциях (styleguide.md)
+    - unconvert # Лишние конвертации типов
+    - unparam # Неиспользуемые параметры и результаты
+    - usestdlibvars # http.MethodGet, http.StatusOK вместо литералов
+    - whitespace # Лишние пустые строки
+
+  disable:
+    # Слишком строгие или не подходящие проекту
+    - err113 # Требует только sentinel-ошибки
+    - exhaustive # Exhaustive switch для enum
+    - exhaustruct # Инициализация всех полей структур
+    - forbidigo # Запрет определённых функций
+    - gochecknoglobals # Запрет глобальных переменных (sentinel-ошибки глобальные)
+    - gochecknoinits # Запрет init
+    - godot # Точки в конце комментариев
+    - godox # Запрет TODO (контролируется ревью)
+    - ireturn # Запрет возврата интерфейсов
+    - nlreturn # Пустая строка перед return
+    - nonamedreturns # Запрет именованных результатов
+    - paralleltest # t.Parallel() во всех тестах
+    - prealloc # Микрооптимизация
+    - tagalign # Выравнивание тегов
+    - tagliatelle # Стиль JSON-тегов задан contracts.md
+    - testpackage # Отдельный пакет для тестов
+    - varnamelen # Длина имён
+    - wrapcheck # Оборачивание всех ошибок
+    - wsl # Пустые строки
+
+  settings:
+    # Слои по contracts.md, раздел 1.
+    depguard:
+      rules:
+        internal-no-cmd:
+          files:
+            - "**/internal/**/*.go"
+          deny:
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/cmd
+              desc: internal не зависит от cmd
+
+        ports:
+          files:
+            - "**/internal/ports/**/*.go"
+          deny:
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/store
+              desc: ports объявляет интерфейсы, реализация в store
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/cryptoclient
+              desc: ports объявляет интерфейсы, реализация в cryptoclient
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/api
+              desc: ports не зависит от HTTP-слоя
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx
+              desc: ports не зависит от HTTP-слоя
+
+        adapters:
+          files:
+            - "**/internal/store/**/*.go"
+            - "**/internal/cryptoclient/**/*.go"
+          deny:
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/auth
+              desc: адаптер не импортирует бизнес-пакеты (contracts.md 1, правило 2)
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/messages
+              desc: адаптер не импортирует бизнес-пакеты (contracts.md 1, правило 2)
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/methods
+              desc: адаптер не импортирует бизнес-пакеты (contracts.md 1, правило 2)
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/verify
+              desc: адаптер не импортирует бизнес-пакеты (contracts.md 1, правило 2)
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/keys
+              desc: адаптер не импортирует бизнес-пакеты (contracts.md 1, правило 2)
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/api
+              desc: адаптер не зависит от HTTP-слоя
+
+        formats:
+          files:
+            - "**/internal/sealed/**/*.go"
+            - "**/internal/pdfsig/**/*.go"
+          deny:
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/store
+              desc: форматы не зависят от хранилища
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/cryptoclient
+              desc: форматы не зависят от крипто-клиента
+            - pkg: github.com/JugadorProgrammer/secure-messaging-platform/internal/api
+              desc: форматы не зависят от HTTP-слоя
+
+    errcheck:
+      check-type-assertions: true
+      check-blank: false # Явное _ = допустимо
+
+    funlen:
+      lines: 100
+      statements: 50
+
+    goconst:
+      min-len: 3
+      min-occurrences: 3
+
+    gocritic:
+      enabled-tags:
+        - diagnostic
+        - performance
+        - style
+      disabled-checks:
+        - hugeParam # Конфиг и DTO передаются по значению сознательно
+        - whyNoLint # Причину проверяет nolintlint
+
+    gocyclo:
+      min-complexity: 20
+
+    gosec:
+      excludes:
+        - G117 # DTO с полями ключей отдаются владельцу намеренно (contracts.md)
+
+    govet:
+      enable-all: true
+      disable:
+        - fieldalignment # Порядок полей важнее экономии байт
+        - shadow # Слишком шумно для err
+
+    lll:
+      line-length: 140
+      tab-width: 4
+
+    nestif:
+      min-complexity: 5
+
+    nolintlint:
+      require-explanation: true
+      require-specific: true
+
+    revive:
+      confidence: 0.8
+      rules:
+        - name: blank-imports
+        - name: context-as-argument
+        - name: context-keys-type
+        - name: dot-imports
+        - name: early-return
+        - name: empty-block
+        - name: error-naming
+        - name: error-return
+        - name: error-strings
+        - name: errorf
+        - name: exported
+          disabled: true # Не требуем комментарий у каждого экспортируемого имени
+        - name: increment-decrement
+        - name: indent-error-flow
+        - name: package-comments
+        - name: range
+        - name: receiver-naming
+        - name: redefines-builtin-id
+        - name: superfluous-else
+        - name: time-naming
+        - name: unexported-return
+        - name: unreachable-code
+        - name: unused-parameter
+        - name: use-any
+        - name: var-naming
+
+    staticcheck:
+      checks:
+        - all
+
+  exclusions:
+    generated: lax
+    presets:
+      - comments
+      - common-false-positives
+      - legacy
+      - std-error-handling
+    rules:
+      # Тесты: длинные таблицы, повторяющиеся строки, моки
+      - path: _test\.go
+        linters:
+          - bodyclose
+          - dupl
+          - errcheck
+          - funlen
+          - goconst
+          - gocyclo
+          - gosec
+          - lll
+          - noctx
+          - unparam
+
+      # Моки реализуют интерфейсы целиком
+      - path: _test\.go
+        linters: [revive]
+        text: unused-parameter
+
+      # Аннотации swag бывают длинными
+      - linters: [lll]
+        source: "^\\s*// @"
+
+      - linters: [lll]
+        source: "^//go:generate "
+
+    paths:
+      - vendor
+      - third_party$
+
+issues:
+  max-issues-per-linter: 0
+  max-same-issues: 0
+
+formatters:
+  enable:
+    - gofmt
+    - goimports
+  settings:
+    goimports:
+      local-prefixes:
+        - github.com/JugadorProgrammer/secure-messaging-platform
+  exclusions:
+    generated: lax
+    paths:
+      - vendor
