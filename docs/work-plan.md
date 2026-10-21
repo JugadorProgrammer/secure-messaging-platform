@@ -32,7 +32,7 @@
 | `coordination-brief.md` | краткая версия для смежных команд |
 | `coordination-tasks.md` | исходная декомпозиция T1…T15 |
 | `contracts.md` | согласованные типы, интерфейсы, форматы |
-| `styleguide.md` | соглашения по коду и документации |
+| `styleguide.md` | 
 
 При расхождении между `coordination-*.md` и `contracts.md` действует `contracts.md`.
 

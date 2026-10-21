@@ -22,15 +22,16 @@ export
 endif
 
 .DEFAULT_GOAL := help
-.PHONY: golangci-lint help build run test cover lint fmt vet check swagger docs docker up infra down tidy
+.PHONY: golangci-lint help build run test cover lint fmt fmt-check vet check swagger docs docker up infra down tidy
 
 help: ## Список целей
-	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-10s %s\n", $$1, $$2}'
+	@grep -E '^[a-z0-9-]+:.*## ' $(MAKEFILE_LIST) | awk 'BEGIN {FS = ":.*## "}; {printf "  %-12s %s\n", $$1, $$2}'
 
 ## --- Разработка ---
 
-build: ## Собрать бинарь bin/coord
+build: ## Собрать бинари bin/coord и bin/healthcheck
 	go build -o bin/coord ./cmd/coord
+	go build -o bin/healthcheck ./cmd/healthcheck
 
 run: ## Запустить сервис локально
 	go run ./cmd/coord
@@ -64,10 +65,13 @@ lint: golangci-lint ## golangci-lint
 fmt: ## Форматирование gofmt
 	gofmt -w .
 
+fmt-check: ## Проверить форматирование без записи
+	@test -z "$$(gofmt -l .)" || { gofmt -l .; echo "файлы выше не отформатированы: make fmt"; exit 1; }
+
 vet: ## go vet
 	go vet ./...
 
-check: fmt vet lint ## fmt + vet + lint
+check: fmt-check vet lint test ## fmt-check + vet + lint + test
 
 ## --- Документация ---
 
@@ -85,12 +89,12 @@ docs: ## Документация по всем пакетам (cmd/, internal/)
 ## --- Docker ---
 
 docker: ## Собрать образ smp-coord:<VERSION>, без VERSION — :local
-	docker build -t $(IMAGE):$(TAG) .
+	docker build --build-arg VERSION=$(TAG) -t $(IMAGE):$(TAG) .
 
-up: ## Поднять Postgres + сервис (docker-compose.yml)
+up: ## Поднять PostgreSQL и сервис (docker-compose.yml)
 	$(COMPOSE) up -d --build
 
-infra: ## Поднять только Postgres
+infra: ## Поднять только PostgreSQL
 	$(COMPOSE) up -d postgres
 
 down: ## Остановить стенд
