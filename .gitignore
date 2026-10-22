@@ -439,6 +439,11 @@ coverage.html
 !.env.example
 vendor/
 
+# Бинарники сервиса (сборка без -o в корне)
+/coord
+/healthcheck
+
+
 # Сгенерированная документация (make swagger, make docs)
 /api/
 /site/
