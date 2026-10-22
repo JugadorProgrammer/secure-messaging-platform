@@ -1,6 +1,6 @@
 package httpx
 
-// Коды ошибок из contracts.md, раздел 4.
+// Error codes from contracts.md, section 4.
 const (
 	CodeValidation           = "validation"
 	CodeBadKey               = "bad_key"

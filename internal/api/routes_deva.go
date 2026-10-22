@@ -7,9 +7,8 @@ import (
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
 )
 
-// registerDevA регистрирует маршруты зоны Dev A: auth, methods,
-// messages (чтение) и verify.
+// registerDevA registers the Dev A routes: auth, methods, messages (read) and verify.
 //
-// На шаге каркаса маршрутов нет: они добавляются в COORD-7, COORD-6,
-// COORD-8, COORD-12 и COORD-15.
+// The skeleton has no routes yet: they arrive in COORD-7, COORD-6, COORD-8,
+// COORD-12 and COORD-15.
 func registerDevA(_ *http.ServeMux, _ *config.Config, _ *slog.Logger) {}

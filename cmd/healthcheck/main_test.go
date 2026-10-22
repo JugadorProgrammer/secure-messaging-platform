@@ -50,7 +50,7 @@ func TestRunAgainstHealthyServer(t *testing.T) {
 
 		w.WriteHeader(http.StatusOK)
 	}))
-	defer srv.Close()
+	t.Cleanup(srv.Close)
 
 	t.Setenv("HTTP_ADDR", srv.Listener.Addr().String())
 
@@ -63,7 +63,7 @@ func TestRunAgainstUnhealthyServer(t *testing.T) {
 	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
 		w.WriteHeader(http.StatusServiceUnavailable)
 	}))
-	defer srv.Close()
+	t.Cleanup(srv.Close)
 
 	t.Setenv("HTTP_ADDR", srv.Listener.Addr().String())
 

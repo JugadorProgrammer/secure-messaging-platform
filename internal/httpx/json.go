@@ -8,39 +8,60 @@ import (
 
 const contentTypeJSON = "application/json; charset=utf-8"
 
-// ErrorResponse — тело ошибки в едином формате contracts.md, раздел 4.
+// ErrorResponse is the error body in the uniform format from contracts.md, section 4.
 type ErrorResponse struct {
 	Error ErrorBody `json:"error"`
 }
 
-// ErrorBody — машиночитаемый код и текст ошибки.
+// ErrorBody carries the machine-readable code and the message shown to the client.
 type ErrorBody struct {
 	Code    string `json:"code"`
 	Message string `json:"message"`
 }
 
-// WriteJSON отправляет v в формате JSON с указанным статусом.
+// WriteJSON writes v as JSON with the given status code.
+//
+// The value is encoded before the status is sent: if encoding fails the client
+// gets a 500 instead of a 200 with an empty body.
 func WriteJSON(w http.ResponseWriter, status int, v any) {
-	setJSONHeaders(w)
-	w.WriteHeader(status)
-
 	if v == nil {
+		setJSONHeaders(w)
+		w.WriteHeader(status)
+
 		return
 	}
 
-	if err := json.NewEncoder(w).Encode(v); err != nil {
+	b, err := json.Marshal(v)
+	if err != nil {
 		slog.Error("encode json response", "err", err)
+		WriteErr(w, http.StatusInternalServerError, CodeInternal, "Внутренняя ошибка сервера")
+
+		return
 	}
+
+	setJSONHeaders(w)
+	w.WriteHeader(status)
+	_, _ = w.Write(b)
 }
 
-// WriteErr отправляет ошибку в едином формате. Если заголовки уже отправлены,
-// тело не пишется: изменить статус всё равно нельзя.
+// WriteErr writes an error in the uniform format. When the headers have already
+// been sent the body is skipped: the status cannot be changed anymore.
+//
+// The body is encoded here rather than through WriteJSON so that a failure in
+// WriteJSON cannot lead back into WriteErr.
 func WriteErr(w http.ResponseWriter, status int, code, message string) {
 	if wroteHeader(w) {
 		return
 	}
 
-	WriteJSON(w, status, ErrorResponse{Error: ErrorBody{Code: code, Message: message}})
+	b, err := json.Marshal(ErrorResponse{Error: ErrorBody{Code: code, Message: message}})
+	if err != nil {
+		b = []byte(`{"error":{"code":"internal","message":"Внутренняя ошибка сервера"}}`)
+	}
+
+	setJSONHeaders(w)
+	w.WriteHeader(status)
+	_, _ = w.Write(b)
 }
 
 func setJSONHeaders(w http.ResponseWriter) {
@@ -50,8 +71,8 @@ func setJSONHeaders(w http.ResponseWriter) {
 	h.Set("X-Content-Type-Options", "nosniff")
 }
 
-// headerWriter реализуется обёрткой Logging и позволяет понять, были ли
-// заголовки уже отправлены.
+// headerWriter is implemented by the Logging wrapper and reports whether the
+// response headers have already been sent.
 type headerWriter interface {
 	WroteHeader() bool
 }

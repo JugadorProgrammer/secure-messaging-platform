@@ -9,7 +9,7 @@ import (
 
 const testMasterKey = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
 
-// baseEnv — минимальный набор обязательных переменных.
+// baseEnv is the minimal set of required variables.
 func baseEnv() map[string]string {
 	return map[string]string{
 		"HTTP_ADDR":    ":8080",
@@ -107,7 +107,7 @@ func TestLoadDefaults(t *testing.T) {
 		{"HTTPIdleTimeout", cfg.HTTPIdleTimeout, 60 * time.Second},
 		{"ShutdownTimeout", cfg.ShutdownTimeout, 15 * time.Second},
 		{"AccountsTimeout", cfg.AccountsTimeout, 3 * time.Second},
-		{"CryptoTimeout", cfg.CryptoTimeout, 10 * time.Second},
+		{"CryptoTimeout", cfg.CryptoTimeout, 30 * time.Second},
 		{"RSAKeygenTimeout", cfg.RSAKeygenTimeout, 60 * time.Minute},
 		{"MaxBodyAuth", cfg.MaxBodyAuth, int64(1 << 20)},
 		{"MaxBodyUsers", cfg.MaxBodyUsers, int64(64 << 10)},
@@ -177,6 +177,26 @@ func TestLoadErrors(t *testing.T) {
 			name:    "RSA_BITS not multiple of 8",
 			mutate:  func(env map[string]string) { env["RSA_BITS"] = "2050" },
 			wantErr: "RSA_BITS must be at least 2048",
+		},
+		{
+			name:    "RSA_BITS too large",
+			mutate:  func(env map[string]string) { env["RSA_BITS"] = "65536" },
+			wantErr: "RSA_BITS must be at most 32768",
+		},
+		{
+			name:    "HTTP_ADDR without port",
+			mutate:  func(env map[string]string) { env["HTTP_ADDR"] = "localhost" },
+			wantErr: "HTTP_ADDR must be host:port",
+		},
+		{
+			name:    "HTTP_ADDR with bad port",
+			mutate:  func(env map[string]string) { env["HTTP_ADDR"] = "localhost:http" },
+			wantErr: "HTTP_ADDR port must be a number",
+		},
+		{
+			name:    "HTTP_ADDR with empty port",
+			mutate:  func(env map[string]string) { env["HTTP_ADDR"] = "localhost:" },
+			wantErr: "HTTP_ADDR must contain a port",
 		},
 		{
 			name:    "bad ACCOUNTS_URL scheme",

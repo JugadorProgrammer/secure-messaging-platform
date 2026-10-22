@@ -6,11 +6,11 @@ import (
 	"strings"
 )
 
-// UniformErrors заменяет текстовые ответы 404 и 405, которые отдаёт
-// http.ServeMux, на JSON в едином формате contracts.md, раздел 4.
+// UniformErrors replaces the plain-text 404 and 405 responses produced by
+// http.ServeMux with JSON in the uniform format from contracts.md, section 4.
 //
-// Ответы, у которых Content-Type уже задан обработчиком (в том числе ошибки
-// из WriteErr), не трогаются.
+// Responses whose Content-Type is already set by a handler (including errors
+// written through WriteErr) are left untouched.
 func UniformErrors(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		next.ServeHTTP(&uniformWriter{ResponseWriter: w}, r)
@@ -40,7 +40,7 @@ func (w *uniformWriter) WriteHeader(code int) {
 	}
 
 	if err := json.NewEncoder(w.ResponseWriter).Encode(body); err != nil {
-		// Ответ уже отправлен, остаётся только не мешать обработке запроса.
+		// The response is already sent, so there is nothing left to report.
 		_ = err
 	}
 }
@@ -53,12 +53,12 @@ func (w *uniformWriter) Write(p []byte) (int, error) {
 	return w.ResponseWriter.Write(p)
 }
 
-// Unwrap возвращает исходный ResponseWriter для http.NewResponseController.
+// Unwrap returns the original ResponseWriter for http.NewResponseController.
 func (w *uniformWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
-// shouldReplace сообщает, нужно ли заменить текстовый ответ на JSON.
+// shouldReplace reports whether a plain-text response must be replaced with JSON.
 func (w *uniformWriter) shouldReplace(code int) bool {
 	if code != http.StatusNotFound && code != http.StatusMethodNotAllowed {
 		return false

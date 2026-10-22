@@ -2,9 +2,9 @@ package httpx
 
 import "net/http"
 
-// BodyLimit ограничивает размер тела запроса. Явно заданный Content-Length
-// больше лимита отклоняется сразу с 413; иначе тело оборачивается
-// http.MaxBytesReader и чтение сверх лимита вернёт ошибку.
+// BodyLimit caps the request body size. An explicit Content-Length above the
+// limit is rejected immediately with 413; otherwise the body is wrapped into
+// http.MaxBytesReader and reading past the limit returns an error.
 func BodyLimit(limit int64) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

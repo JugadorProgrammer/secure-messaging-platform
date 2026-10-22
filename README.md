@@ -38,7 +38,7 @@ middleware, проверки доступности. Прикладных мар
 | `MASTER_KEY` | да | — (64 hex-символа) |
 | `ACCOUNTS_URL` | да | — |
 | `CRYPTO_URL` | да | — |
-| `RSA_BITS` | нет | `32768` |
+| `RSA_BITS` | нет | `32768` (от 2048 до 32768, кратно 8) |
 | `CORS_ORIGINS` | нет | пусто (CORS выключен) |
 | `LOG_LEVEL` | нет | `info` |
 | `HTTP_READ_HEADER_TIMEOUT` | нет | `5s` |
@@ -47,7 +47,7 @@ middleware, проверки доступности. Прикладных мар
 | `HTTP_IDLE_TIMEOUT` | нет | `60s` |
 | `SHUTDOWN_TIMEOUT` | нет | `15s` |
 | `ACCOUNTS_TIMEOUT` | нет | `3s` |
-| `CRYPTO_TIMEOUT` | нет | `10s` |
+| `CRYPTO_TIMEOUT` | нет | `30s` |
 | `RSA_KEYGEN_TIMEOUT` | нет | `60m` |
 | `MAX_BODY_AUTH` | нет | `1MiB` |
 | `MAX_BODY_USERS` | нет | `64KiB` |
@@ -155,7 +155,7 @@ make check       # fmt-check + vet + lint + test
 
 ## Структура
 
-```
+```text
 cmd/coord/           запуск, graceful shutdown
 cmd/healthcheck/     проверка доступности для HEALTHCHECK
 internal/config/     конфигурация из env и её валидация

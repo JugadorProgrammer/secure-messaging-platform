@@ -91,6 +91,25 @@ func TestWriteErr(t *testing.T) {
 	}
 }
 
+func TestWriteJSONMarshalError(t *testing.T) {
+	rec := httptest.NewRecorder()
+
+	// A function cannot be encoded, so WriteJSON must report 500 instead of 200.
+	WriteJSON(rec, http.StatusOK, func() {})
+
+	if rec.Code != http.StatusInternalServerError {
+		t.Fatalf("status = %d, want %d", rec.Code, http.StatusInternalServerError)
+	}
+
+	var got ErrorResponse
+	if err := json.NewDecoder(rec.Body).Decode(&got); err != nil {
+		t.Fatalf("decode body: %v", err)
+	}
+	if got.Error.Code != CodeInternal {
+		t.Errorf("code = %q, want %q", got.Error.Code, CodeInternal)
+	}
+}
+
 func TestWriteErrAfterHeadersSent(t *testing.T) {
 	rec := httptest.NewRecorder()
 	sw := &statusWriter{ResponseWriter: rec, status: http.StatusOK}

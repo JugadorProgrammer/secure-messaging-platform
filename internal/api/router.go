@@ -1,4 +1,4 @@
-// Package api собирает HTTP-маршруты сервиса.
+// Package api wires the service HTTP routes.
 package api
 
 import (
@@ -9,11 +9,11 @@ import (
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
 )
 
-// New собирает обработчик сервиса: маршруты, middleware и единый формат ошибок.
+// New builds the service handler: routes, middleware and the uniform error format.
 //
-// Порядок middleware: RequestID → Logging → Recover → CORS → UniformErrors.
-// Recover стоит выше обработчиков, поэтому паника превращается в 500,
-// а Logging видит уже итоговый статус.
+// Middleware order: RequestID → Logging → Recover → CORS → UniformErrors.
+// Recover sits above the handlers, so a panic becomes a 500 while Logging still
+// sees the final status.
 func New(cfg *config.Config, log *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 
@@ -31,19 +31,19 @@ func New(cfg *config.Config, log *slog.Logger) http.Handler {
 	return handler
 }
 
-// registerHealth регистрирует проверки доступности сервиса. Они не обращаются
-// ни к базе, ни к внешним сервисам.
+// registerHealth registers the service availability checks. They touch neither
+// the database nor external services.
 func registerHealth(mux *http.ServeMux) {
 	mux.HandleFunc("GET /health", health)
 	mux.HandleFunc("GET /api/health", health)
 }
 
-// healthResponse — тело ответа проверки доступности.
+// healthResponse is the availability check response body.
 type healthResponse struct {
 	Status string `json:"status" example:"ok"`
 }
 
-// health сообщает, что процесс запущен и принимает запросы.
+// health reports that the process is running and accepting requests.
 //
 // @Summary  Проверка доступности сервиса
 // @Tags     service

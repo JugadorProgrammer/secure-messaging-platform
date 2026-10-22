@@ -25,7 +25,7 @@ func main() {
 	}
 }
 
-// run загружает конфигурацию и запускает сервер до сигнала остановки.
+// run loads the configuration and runs the server until a stop signal arrives.
 func run() error {
 	cfg, err := config.Load(os.Getenv)
 	if err != nil {
@@ -41,7 +41,7 @@ func run() error {
 	return serve(ctx, cfg, log)
 }
 
-// serve поднимает HTTP-сервер и корректно завершает его по отмене ctx.
+// serve starts the HTTP server and shuts it down gracefully when ctx is cancelled.
 func serve(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -78,7 +78,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 	return closedAsNil(<-errCh)
 }
 
-// closedAsNil считает штатное завершение сервера успехом.
+// closedAsNil treats a normal server shutdown as success.
 func closedAsNil(err error) error {
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil

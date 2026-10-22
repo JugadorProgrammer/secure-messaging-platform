@@ -7,14 +7,14 @@ import (
 	"runtime/debug"
 )
 
-// Recover превращает панику в 500 в едином формате.
+// Recover turns a panic into a 500 response in the uniform format.
 //
-// http.ErrAbortHandler пробрасывается дальше: его использует
-// httputil.ReverseProxy при обрыве соединения, и перехват сломал бы прокси.
+// http.ErrAbortHandler is re-panicked: httputil.ReverseProxy uses it to abort
+// a connection, and swallowing it would break the proxy.
 func Recover(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//nolint:contextcheck // recover вызывается только напрямую из defer, контекст берётся из запроса
+			//nolint:contextcheck // the deferred func runs inside the handler, the context comes from the request
 			defer func() {
 				rec := recover()
 				if rec == nil {

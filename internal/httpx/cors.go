@@ -20,7 +20,7 @@ const (
 	corsWildcard       = "*"
 )
 
-// CORS разрешает запросы с указанных origin. Пустой список отключает CORS.
+// CORS allows requests from the given origins. An empty list disables CORS.
 func CORS(origins []string) func(http.Handler) http.Handler {
 	allowed := make(map[string]struct{}, len(origins))
 	wildcard := false

@@ -7,9 +7,8 @@ import (
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
 )
 
-// registerDevB регистрирует маршруты зоны Dev B: запись сообщений,
-// расшифрование и PDF.
+// registerDevB registers the Dev B routes: message write, decryption and PDF.
 //
-// Файл принадлежит Dev B: Dev A его не меняет. На шаге каркаса маршрутов нет,
-// они добавляются в COORD-10, COORD-13 и COORD-14.
+// The file belongs to Dev B and Dev A never edits it. The skeleton has no routes
+// yet: they arrive in COORD-10, COORD-13 and COORD-14.
 func registerDevB(_ *http.ServeMux, _ *config.Config, _ *slog.Logger) {}

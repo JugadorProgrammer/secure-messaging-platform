@@ -6,8 +6,9 @@ import (
 	"time"
 )
 
-// Logging пишет по одной записи на запрос: метод, путь, статус, размер ответа,
-// длительность и request_id. Тело запроса и заголовок Authorization не логируются.
+// Logging writes one record per request: method, path, status, response size,
+// duration and request_id. The request body and the Authorization header are
+// never logged.
 func Logging(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -36,8 +37,9 @@ func Logging(log *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// statusWriter запоминает статус и размер ответа, сохраняя доступ к исходному
-// ResponseWriter через Unwrap. Flush нужен для стриминга и прокси.
+// statusWriter records the status and the response size while keeping access to
+// the original ResponseWriter through Unwrap. Flush is needed for streaming and
+// proxying.
 type statusWriter struct {
 	http.ResponseWriter
 
@@ -67,17 +69,17 @@ func (w *statusWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// WroteHeader сообщает, были ли отправлены заголовки ответа.
+// WroteHeader reports whether the response headers have been sent.
 func (w *statusWriter) WroteHeader() bool {
 	return w.wrote
 }
 
-// Unwrap возвращает исходный ResponseWriter для http.NewResponseController.
+// Unwrap returns the original ResponseWriter for http.NewResponseController.
 func (w *statusWriter) Unwrap() http.ResponseWriter {
 	return w.ResponseWriter
 }
 
-// Flush пробрасывает сброс буфера, если базовый ResponseWriter это умеет.
+// Flush forwards the buffer flush when the underlying ResponseWriter supports it.
 func (w *statusWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()

@@ -1,4 +1,4 @@
-// Package config загружает и проверяет конфигурацию сервиса из переменных окружения.
+// Package config loads and validates the service configuration from the environment.
 package config
 
 import (
@@ -7,16 +7,18 @@ import (
 	"fmt"
 	"log/slog"
 	"math"
+	"net"
 	"net/url"
 	"strconv"
 	"strings"
 	"time"
 )
 
-// Значения по умолчанию из contracts.md, раздел 12.
+// Default values from contracts.md, section 12.
 const (
 	defaultRSABits = 32768
 	minRSABits     = 2048
+	maxRSABits     = 32768
 
 	defaultReadHeaderTimeout = 5 * time.Second
 	defaultReadTimeout       = 15 * time.Second
@@ -24,8 +26,10 @@ const (
 	defaultIdleTimeout       = 60 * time.Second
 	defaultShutdownTimeout   = 15 * time.Second
 	defaultAccountsTimeout   = 3 * time.Second
-	defaultCryptoTimeout     = 10 * time.Second
-	defaultRSAKeygenTimeout  = 60 * time.Minute
+	// A 32768-bit key makes encryption slow enough that 10s is not always
+	// enough, so the crypto timeout is raised above the contract default.
+	defaultCryptoTimeout    = 30 * time.Second
+	defaultRSAKeygenTimeout = 60 * time.Minute
 
 	defaultMaxBodyAuth     = 1 << 20 // 1 MiB
 	defaultMaxBodyUsers    = 64 << 10
@@ -36,10 +40,10 @@ const (
 	redacted     = "[redacted]"
 )
 
-// Config — проверенная конфигурация сервиса.
+// Config is the validated service configuration.
 //
-// Мастер-ключ хранится массивом фиксированной длины; String и LogValue
-// не выводят его и DSN.
+// The master key is stored as a fixed-size array; String and LogValue never
+// print it or the DSN.
 type Config struct {
 	HTTPAddr string
 	DSN      string
@@ -69,9 +73,9 @@ type Config struct {
 	MaxPDFUpload    int64
 }
 
-// Load читает конфигурацию через getenv. Если обязательная переменная
-// отсутствует или значение недопустимо, возвращается ошибка со всеми
-// найденными проблемами.
+// Load reads the configuration through getenv. A missing required variable or
+// an invalid value produces an error that lists every problem found, not just
+// the first one.
 func Load(getenv func(string) string) (*Config, error) {
 	if getenv == nil {
 		return nil, errors.New("config: getenv must not be nil")
@@ -79,7 +83,7 @@ func Load(getenv func(string) string) (*Config, error) {
 
 	l := &loader{getenv: getenv}
 	cfg := &Config{
-		HTTPAddr:    l.required("HTTP_ADDR"),
+		HTTPAddr:    l.httpAddr("HTTP_ADDR"),
 		DSN:         l.required("DSN"),
 		MasterKey:   l.masterKey("MASTER_KEY"),
 		AccountsURL: l.url("ACCOUNTS_URL"),
@@ -111,12 +115,12 @@ func Load(getenv func(string) string) (*Config, error) {
 	return cfg, nil
 }
 
-// MasterKeyHex возвращает мастер-ключ в hex-виде для пакета sealed.
+// MasterKeyHex returns the master key as a hex string for the sealed package.
 func (c *Config) MasterKeyHex() string {
 	return hex.EncodeToString(c.MasterKey[:])
 }
 
-// String возвращает представление конфигурации без секретов.
+// String returns a configuration representation without secrets.
 func (c *Config) String() string {
 	if c == nil {
 		return "config(nil)"
@@ -129,7 +133,7 @@ func (c *Config) String() string {
 	)
 }
 
-// LogValue скрывает DSN и мастер-ключ при логировании через slog.
+// LogValue hides the DSN and the master key when the config is logged via slog.
 func (c *Config) LogValue() slog.Value {
 	if c == nil {
 		return slog.StringValue("config(nil)")
@@ -167,7 +171,7 @@ func urlString(u *url.URL) string {
 	return u.String()
 }
 
-// loader накапливает ошибки, чтобы вернуть их все сразу.
+// loader collects errors so that all of them are reported at once.
 type loader struct {
 	getenv func(string) string
 	errs   []error
@@ -184,6 +188,35 @@ func (l *loader) required(name string) string {
 	}
 
 	return v
+}
+
+// httpAddr checks that the value is a host:port pair accepted by net.Listen.
+func (l *loader) httpAddr(name string) string {
+	raw := l.value(name)
+	if raw == "" {
+		l.errs = append(l.errs, fmt.Errorf("%s is required", name))
+
+		return ""
+	}
+
+	_, port, err := net.SplitHostPort(raw)
+	if err != nil {
+		l.errs = append(l.errs, fmt.Errorf("%s must be host:port: %w", name, err))
+
+		return ""
+	}
+	if port == "" {
+		l.errs = append(l.errs, fmt.Errorf("%s must contain a port", name))
+
+		return ""
+	}
+	if _, err := strconv.Atoi(port); err != nil {
+		l.errs = append(l.errs, fmt.Errorf("%s port must be a number, got %q", name, port))
+
+		return ""
+	}
+
+	return raw
 }
 
 func (l *loader) masterKey(name string) [masterKeyLen]byte {
@@ -257,6 +290,11 @@ func (l *loader) rsaBits(name string) int {
 	if n < minRSABits || n%8 != 0 {
 		l.errs = append(l.errs, fmt.Errorf("%s must be at least %d and a multiple of 8, got %d",
 			name, minRSABits, n))
+
+		return defaultRSABits
+	}
+	if n > maxRSABits {
+		l.errs = append(l.errs, fmt.Errorf("%s must be at most %d, got %d", name, maxRSABits, n))
 
 		return defaultRSABits
 	}
@@ -368,7 +406,7 @@ var sizeUnits = []struct {
 	{"B", 1},
 }
 
-// parseSize разбирает размер вида "64KiB", "10MiB", "1024" или "1MB".
+// parseSize parses a size such as "64KiB", "10MiB", "1024" or "1MB".
 func parseSize(raw string) (int64, error) {
 	raw = strings.TrimSpace(raw)
 
