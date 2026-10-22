@@ -1,6 +1,6 @@
 package httpx
 
-// Error codes from contracts.md, section 4.
+// Коды ошибок из contracts.md, раздел 4.
 const (
 	CodeValidation           = "validation"
 	CodeBadKey               = "bad_key"
@@ -18,3 +18,8 @@ const (
 	CodeAccountsUnavailable  = "accounts_unavailable"
 	CodeCryptoUnavailable    = "crypto_unavailable"
 )
+
+// msgInternalError — текст, который клиент видит при коде internal.
+// Объявлен рядом с кодами, чтобы все ответы 500 читались одинаково
+// (стилгайд, раздел 6.2).
+const msgInternalError = "Внутренняя ошибка сервера"

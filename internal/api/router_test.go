@@ -146,11 +146,14 @@ func TestCORSDisabledByDefault(t *testing.T) {
 	}
 }
 
-func TestNewReturnsHandlerForNilCORS(t *testing.T) {
-	cfg := testConfig(t, nil)
-	cfg.CORSOrigins = nil
+// stubConfig реализует Config без пакета config: роутеру нужен только список
+// разрешённых origin.
+type stubConfig []string
 
-	h := New(cfg, discardLogger())
+func (s stubConfig) CORSOrigins() []string { return s }
+
+func TestNewAcceptsStubConfig(t *testing.T) {
+	h := New(stubConfig(nil), discardLogger())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/health", http.NoBody))

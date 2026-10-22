@@ -6,14 +6,14 @@ import (
 	"time"
 )
 
-// Logging writes one record per request: method, path, status, response size,
-// duration and request_id. The request body and the Authorization header are
-// never logged.
+// Logging пишет одну запись на запрос: метод, путь, статус, размер ответа,
+// длительность и request_id. Тело запроса и заголовок Authorization
+// не логируются никогда.
 func Logging(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			start := time.Now()
-			sw := &statusWriter{ResponseWriter: w, status: http.StatusOK}
+			sw := newStatusWriter(w)
 
 			next.ServeHTTP(sw, r)
 
@@ -37,15 +37,23 @@ func Logging(log *slog.Logger) func(http.Handler) http.Handler {
 	}
 }
 
-// statusWriter records the status and the response size while keeping access to
-// the original ResponseWriter through Unwrap. Flush is needed for streaming and
-// proxying.
+// statusWriter запоминает статус и размер ответа. Исходный ResponseWriter
+// остаётся доступен через встроенный responseWriter.
 type statusWriter struct {
-	http.ResponseWriter
+	responseWriter
 
 	status int
 	bytes  int64
 	wrote  bool
+}
+
+// newStatusWriter оборачивает w и считает статус равным 200, пока обработчик
+// не скажет иначе.
+func newStatusWriter(w http.ResponseWriter) *statusWriter {
+	return &statusWriter{
+		responseWriter: responseWriter{ResponseWriter: w},
+		status:         http.StatusOK,
+	}
 }
 
 func (w *statusWriter) WriteHeader(code int) {
@@ -69,17 +77,12 @@ func (w *statusWriter) Write(p []byte) (int, error) {
 	return n, err
 }
 
-// WroteHeader reports whether the response headers have been sent.
+// WroteHeader сообщает, отправлены ли заголовки ответа.
 func (w *statusWriter) WroteHeader() bool {
 	return w.wrote
 }
 
-// Unwrap returns the original ResponseWriter for http.NewResponseController.
-func (w *statusWriter) Unwrap() http.ResponseWriter {
-	return w.ResponseWriter
-}
-
-// Flush forwards the buffer flush when the underlying ResponseWriter supports it.
+// Flush передаёт сброс буфера, если исходный ResponseWriter это умеет.
 func (w *statusWriter) Flush() {
 	if f, ok := w.ResponseWriter.(http.Flusher); ok {
 		f.Flush()

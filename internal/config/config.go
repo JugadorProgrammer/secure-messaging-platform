@@ -1,4 +1,4 @@
-// Package config loads and validates the service configuration from the environment.
+// Package config читает и проверяет конфигурацию сервиса из окружения.
 package config
 
 import (
@@ -14,7 +14,7 @@ import (
 	"time"
 )
 
-// Default values from contracts.md, section 12.
+// Значения по умолчанию из contracts.md, раздел 12.
 const (
 	defaultRSABits = 32768
 	minRSABits     = 2048
@@ -26,8 +26,8 @@ const (
 	defaultIdleTimeout       = 60 * time.Second
 	defaultShutdownTimeout   = 15 * time.Second
 	defaultAccountsTimeout   = 3 * time.Second
-	// A 32768-bit key makes encryption slow enough that 10s is not always
-	// enough, so the crypto timeout is raised above the contract default.
+	// Ключ в 32768 бит шифрует достаточно медленно, и 10 секунд не всегда
+	// хватает, поэтому таймаут крипто-модуля поднят выше контракта.
 	defaultCryptoTimeout    = 30 * time.Second
 	defaultRSAKeygenTimeout = 60 * time.Minute
 
@@ -40,10 +40,10 @@ const (
 	redacted     = "[redacted]"
 )
 
-// Config is the validated service configuration.
+// Config — проверенная конфигурация сервиса.
 //
-// The master key is stored as a fixed-size array; String and LogValue never
-// print it or the DSN.
+// Мастер-ключ хранится массивом фиксированной длины; String и LogValue
+// никогда его не печатают и не печатают DSN.
 type Config struct {
 	HTTPAddr string
 	DSN      string
@@ -54,7 +54,7 @@ type Config struct {
 	CryptoURL   *url.URL
 
 	RSABits     int
-	CORSOrigins []string
+	corsOrigins []string
 	LogLevel    slog.Level
 
 	HTTPReadHeaderTimeout time.Duration
@@ -73,9 +73,9 @@ type Config struct {
 	MaxPDFUpload    int64
 }
 
-// Load reads the configuration through getenv. A missing required variable or
-// an invalid value produces an error that lists every problem found, not just
-// the first one.
+// Load читает конфигурацию через getenv. Отсутствие обязательной переменной или
+// некорректное значение дают ошибку, которая перечисляет все найденные проблемы,
+// а не только первую.
 func Load(getenv func(string) string) (*Config, error) {
 	if getenv == nil {
 		return nil, errors.New("config: getenv must not be nil")
@@ -89,7 +89,7 @@ func Load(getenv func(string) string) (*Config, error) {
 		AccountsURL: l.url("ACCOUNTS_URL"),
 		CryptoURL:   l.url("CRYPTO_URL"),
 		RSABits:     l.rsaBits("RSA_BITS"),
-		CORSOrigins: l.origins("CORS_ORIGINS"),
+		corsOrigins: l.origins("CORS_ORIGINS"),
 		LogLevel:    l.logLevel("LOG_LEVEL"),
 
 		HTTPReadHeaderTimeout: l.duration("HTTP_READ_HEADER_TIMEOUT", defaultReadHeaderTimeout),
@@ -115,12 +115,12 @@ func Load(getenv func(string) string) (*Config, error) {
 	return cfg, nil
 }
 
-// MasterKeyHex returns the master key as a hex string for the sealed package.
-func (c *Config) MasterKeyHex() string {
-	return hex.EncodeToString(c.MasterKey[:])
+// CORSOrigins возвращает origin, разрешённые CORS. Пустой список отключает CORS.
+func (c *Config) CORSOrigins() []string {
+	return c.corsOrigins
 }
 
-// String returns a configuration representation without secrets.
+// String возвращает представление конфигурации без секретов.
 func (c *Config) String() string {
 	if c == nil {
 		return "config(nil)"
@@ -129,11 +129,11 @@ func (c *Config) String() string {
 	return fmt.Sprintf(
 		"config{http_addr=%q dsn=%s master_key=%s accounts_url=%s crypto_url=%s rsa_bits=%d cors_origins=%v log_level=%s}",
 		c.HTTPAddr, redacted, redacted, urlString(c.AccountsURL), urlString(c.CryptoURL),
-		c.RSABits, c.CORSOrigins, c.LogLevel,
+		c.RSABits, c.CORSOrigins(), c.LogLevel,
 	)
 }
 
-// LogValue hides the DSN and the master key when the config is logged via slog.
+// LogValue скрывает DSN и мастер-ключ при логировании через slog.
 func (c *Config) LogValue() slog.Value {
 	if c == nil {
 		return slog.StringValue("config(nil)")
@@ -146,7 +146,7 @@ func (c *Config) LogValue() slog.Value {
 		slog.String("accounts_url", urlString(c.AccountsURL)),
 		slog.String("crypto_url", urlString(c.CryptoURL)),
 		slog.Int("rsa_bits", c.RSABits),
-		slog.Any("cors_origins", c.CORSOrigins),
+		slog.Any("cors_origins", c.CORSOrigins()),
 		slog.String("log_level", c.LogLevel.String()),
 		slog.Duration("http_read_header_timeout", c.HTTPReadHeaderTimeout),
 		slog.Duration("http_read_timeout", c.HTTPReadTimeout),
@@ -171,7 +171,7 @@ func urlString(u *url.URL) string {
 	return u.String()
 }
 
-// loader collects errors so that all of them are reported at once.
+// loader собирает ошибки, чтобы сообщить обо всех сразу.
 type loader struct {
 	getenv func(string) string
 	errs   []error
@@ -190,7 +190,7 @@ func (l *loader) required(name string) string {
 	return v
 }
 
-// httpAddr checks that the value is a host:port pair accepted by net.Listen.
+// httpAddr проверяет, что значение — это host:port, который принимает net.Listen.
 func (l *loader) httpAddr(name string) string {
 	raw := l.value(name)
 	if raw == "" {
@@ -231,7 +231,7 @@ func (l *loader) masterKey(name string) [masterKeyLen]byte {
 
 	b, err := hex.DecodeString(raw)
 	if err != nil {
-		l.errs = append(l.errs, fmt.Errorf("%s must be hex encoded: %w", name, err))
+		l.errs = append(l.errs, fmt.Errorf("%s must be hex encoded", name))
 
 		return key
 	}
@@ -406,9 +406,9 @@ var sizeUnits = []struct {
 	{"B", 1},
 }
 
-// parseSize parses a size such as "64KiB", "10MiB", "1024" or "1MB".
-func parseSize(raw string) (int64, error) {
-	raw = strings.TrimSpace(raw)
+// parseSize разбирает размер вида "64KiB", "10MiB", "1024" или "1MB".
+func parseSize(value string) (int64, error) {
+	raw := strings.TrimSpace(value)
 
 	for _, u := range sizeUnits {
 		if !strings.HasSuffix(raw, u.suffix) {

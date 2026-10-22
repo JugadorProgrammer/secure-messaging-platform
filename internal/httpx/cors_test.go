@@ -12,98 +12,110 @@ func okHandler() http.Handler {
 	})
 }
 
-func TestCORSDisabled(t *testing.T) {
-	h := CORS(nil)(okHandler())
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	req.Header.Set("Origin", "http://localhost:5173")
-	h.ServeHTTP(rec, req)
-
-	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "" {
-		t.Errorf("Allow-Origin = %q, want empty", got)
+func TestCORS(t *testing.T) {
+	tests := []struct {
+		name             string
+		origins          []string
+		method           string
+		origin           string
+		requestMethod    string
+		wantStatus       int
+		wantAllowOrigin  string
+		wantVary         string
+		wantAllowMethods string
+		wantAllowHeaders string
+		wantEmptyBody    bool
+	}{
+		{
+			name:       "CORS выключен",
+			origins:    nil,
+			method:     http.MethodGet,
+			origin:     "http://localhost:5173",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:             "разрешённый origin",
+			origins:          []string{"http://localhost:5173"},
+			method:           http.MethodGet,
+			origin:           "http://localhost:5173",
+			wantStatus:       http.StatusOK,
+			wantAllowOrigin:  "http://localhost:5173",
+			wantVary:         "Origin",
+			wantAllowMethods: corsAllowedMethods,
+			wantAllowHeaders: corsAllowedHeaders,
+		},
+		{
+			name:       "чужой origin",
+			origins:    []string{"http://localhost:5173"},
+			method:     http.MethodGet,
+			origin:     "http://evil.example",
+			wantStatus: http.StatusOK,
+		},
+		{
+			name:             "wildcard разрешает любой origin",
+			origins:          []string{"*"},
+			method:           http.MethodGet,
+			origin:           "http://any.example",
+			wantStatus:       http.StatusOK,
+			wantAllowOrigin:  "*",
+			wantVary:         "Origin",
+			wantAllowMethods: corsAllowedMethods,
+			wantAllowHeaders: corsAllowedHeaders,
+		},
+		{
+			name:             "preflight OPTIONS",
+			origins:          []string{"http://localhost:5173"},
+			method:           http.MethodOptions,
+			origin:           "http://localhost:5173",
+			requestMethod:    http.MethodPost,
+			wantStatus:       http.StatusNoContent,
+			wantAllowOrigin:  "http://localhost:5173",
+			wantVary:         "Origin",
+			wantAllowMethods: corsAllowedMethods,
+			wantAllowHeaders: corsAllowedHeaders,
+			wantEmptyBody:    true,
+		},
+		{
+			name:       "OPTIONS без Access-Control-Request-Method",
+			origins:    []string{"http://localhost:5173"},
+			method:     http.MethodOptions,
+			wantStatus: http.StatusOK,
+		},
 	}
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
-	}
-}
 
-func TestCORSAllowedOrigin(t *testing.T) {
-	h := CORS([]string{"http://localhost:5173"})(okHandler())
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			h := CORS(tt.origins)(okHandler())
 
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	req.Header.Set("Origin", "http://localhost:5173")
-	h.ServeHTTP(rec, req)
+			rec := httptest.NewRecorder()
+			req := httptest.NewRequest(tt.method, "/api/messages", http.NoBody)
+			if tt.origin != "" {
+				req.Header.Set(headerOrigin, tt.origin)
+			}
+			if tt.requestMethod != "" {
+				req.Header.Set(headerRequestMethod, tt.requestMethod)
+			}
 
-	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "http://localhost:5173" {
-		t.Errorf("Allow-Origin = %q", got)
-	}
-	if got := rec.Header().Get("Vary"); got != "Origin" {
-		t.Errorf("Vary = %q, want Origin", got)
-	}
-}
+			h.ServeHTTP(rec, req)
 
-func TestCORSForeignOrigin(t *testing.T) {
-	h := CORS([]string{"http://localhost:5173"})(okHandler())
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	req.Header.Set("Origin", "http://evil.example")
-	h.ServeHTTP(rec, req)
-
-	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "" {
-		t.Errorf("Allow-Origin = %q, want empty", got)
-	}
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
-	}
-}
-
-func TestCORSWildcard(t *testing.T) {
-	h := CORS([]string{"*"})(okHandler())
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodGet, "/", http.NoBody)
-	req.Header.Set("Origin", "http://any.example")
-	h.ServeHTTP(rec, req)
-
-	if got := rec.Header().Get("Access-Control-Allow-Origin"); got != "*" {
-		t.Errorf("Allow-Origin = %q, want *", got)
-	}
-}
-
-func TestCORSPreflight(t *testing.T) {
-	h := CORS([]string{"http://localhost:5173"})(okHandler())
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodOptions, "/api/messages", http.NoBody)
-	req.Header.Set("Origin", "http://localhost:5173")
-	req.Header.Set("Access-Control-Request-Method", http.MethodPost)
-	h.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusNoContent {
-		t.Fatalf("status = %d, want %d", rec.Code, http.StatusNoContent)
-	}
-	if got := rec.Header().Get("Access-Control-Allow-Methods"); got == "" {
-		t.Error("Allow-Methods is empty")
-	}
-	if got := rec.Header().Get("Access-Control-Allow-Headers"); got == "" {
-		t.Error("Allow-Headers is empty")
-	}
-	if body := rec.Body.String(); body != "" {
-		t.Errorf("preflight body = %q, want empty", body)
-	}
-}
-
-func TestCORSOptionsWithoutRequestMethod(t *testing.T) {
-	h := CORS([]string{"http://localhost:5173"})(okHandler())
-
-	rec := httptest.NewRecorder()
-	req := httptest.NewRequest(http.MethodOptions, "/api/messages", http.NoBody)
-	h.ServeHTTP(rec, req)
-
-	if rec.Code != http.StatusOK {
-		t.Errorf("status = %d, want %d", rec.Code, http.StatusOK)
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d", rec.Code, tt.wantStatus)
+			}
+			if got := rec.Header().Get(headerAllowOrigin); got != tt.wantAllowOrigin {
+				t.Errorf("Allow-Origin = %q, want %q", got, tt.wantAllowOrigin)
+			}
+			if got := rec.Header().Get(headerVary); got != tt.wantVary {
+				t.Errorf("Vary = %q, want %q", got, tt.wantVary)
+			}
+			if got := rec.Header().Get(headerAllowMethods); got != tt.wantAllowMethods {
+				t.Errorf("Allow-Methods = %q, want %q", got, tt.wantAllowMethods)
+			}
+			if got := rec.Header().Get(headerAllowHeaders); got != tt.wantAllowHeaders {
+				t.Errorf("Allow-Headers = %q, want %q", got, tt.wantAllowHeaders)
+			}
+			if tt.wantEmptyBody && rec.Body.Len() != 0 {
+				t.Errorf("body = %q, want empty", rec.Body.String())
+			}
+		})
 	}
 }

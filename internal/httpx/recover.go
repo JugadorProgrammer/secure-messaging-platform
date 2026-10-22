@@ -7,14 +7,14 @@ import (
 	"runtime/debug"
 )
 
-// Recover turns a panic into a 500 response in the uniform format.
+// Recover превращает панику в ответ 500 в едином формате.
 //
-// http.ErrAbortHandler is re-panicked: httputil.ReverseProxy uses it to abort
-// a connection, and swallowing it would break the proxy.
+// http.ErrAbortHandler пробрасывается дальше: httputil.ReverseProxy использует
+// его для обрыва соединения, и его перехват сломал бы прокси.
 func Recover(log *slog.Logger) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			//nolint:contextcheck // the deferred func runs inside the handler, the context comes from the request
+			//nolint:contextcheck // отложенная функция выполняется внутри обработчика, контекст берётся из запроса
 			defer func() {
 				rec := recover()
 				if rec == nil {
@@ -33,7 +33,7 @@ func Recover(log *slog.Logger) func(http.Handler) http.Handler {
 					slog.String("stack", string(debug.Stack())),
 				)
 
-				WriteErr(w, http.StatusInternalServerError, CodeInternal, "Внутренняя ошибка сервера")
+				WriteErr(w, http.StatusInternalServerError, CodeInternal, msgInternalError)
 			}()
 
 			next.ServeHTTP(w, r)

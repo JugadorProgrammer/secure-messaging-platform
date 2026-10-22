@@ -1,20 +1,28 @@
-// Package api wires the service HTTP routes.
+// Package api собирает HTTP-маршруты сервиса.
 package api
 
 import (
 	"log/slog"
 	"net/http"
 
-	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
 )
 
-// New builds the service handler: routes, middleware and the uniform error format.
+// Config — та часть конфигурации сервиса, которая нужна роутеру.
 //
-// Middleware order: RequestID → Logging → Recover → CORS → UniformErrors.
-// Recover sits above the handlers, so a panic becomes a 500 while Logging still
-// sees the final status.
-func New(cfg *config.Config, log *slog.Logger) http.Handler {
+// Интерфейс объявлен у потребителя: api не должен зависеть от всего пакета
+// config ради одного значения.
+type Config interface {
+	// CORSOrigins возвращает origin, разрешённые CORS.
+	CORSOrigins() []string
+}
+
+// New собирает обработчик сервиса: маршруты, middleware и единый формат ошибок.
+//
+// Порядок middleware: RequestID → Logging → Recover → CORS → UniformErrors.
+// Recover стоит выше обработчиков, поэтому паника превращается в 500, а Logging
+// всё равно видит итоговый статус.
+func New(cfg Config, log *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 
 	registerHealth(mux)
@@ -23,7 +31,7 @@ func New(cfg *config.Config, log *slog.Logger) http.Handler {
 
 	var handler http.Handler = mux
 	handler = httpx.UniformErrors(handler)
-	handler = httpx.CORS(cfg.CORSOrigins)(handler)
+	handler = httpx.CORS(cfg.CORSOrigins())(handler)
 	handler = httpx.Recover(log)(handler)
 	handler = httpx.Logging(log)(handler)
 	handler = httpx.RequestID(handler)
@@ -31,19 +39,19 @@ func New(cfg *config.Config, log *slog.Logger) http.Handler {
 	return handler
 }
 
-// registerHealth registers the service availability checks. They touch neither
-// the database nor external services.
+// registerHealth регистрирует проверки доступности сервиса. Они не трогают
+// ни базу, ни внешние сервисы.
 func registerHealth(mux *http.ServeMux) {
 	mux.HandleFunc("GET /health", health)
 	mux.HandleFunc("GET /api/health", health)
 }
 
-// healthResponse is the availability check response body.
+// healthResponse — тело ответа проверки доступности.
 type healthResponse struct {
 	Status string `json:"status" example:"ok"`
 }
 
-// health reports that the process is running and accepting requests.
+// health сообщает, что процесс запущен и принимает запросы.
 //
 // @Summary  Проверка доступности сервиса
 // @Tags     service

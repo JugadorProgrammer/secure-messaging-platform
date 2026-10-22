@@ -8,7 +8,7 @@ import (
 )
 
 const (
-	// HeaderRequestID is the request identifier header.
+	// HeaderRequestID — заголовок с идентификатором запроса.
 	HeaderRequestID = "X-Request-ID"
 
 	maxRequestIDLen = 64
@@ -16,9 +16,8 @@ const (
 
 type requestIDKey struct{}
 
-// RequestID accepts X-Request-ID from the client when it is safe and generates
-// a new one otherwise. The identifier is stored in the context and returned in
-// the response.
+// RequestID принимает X-Request-ID от клиента, когда он безопасен, и иначе
+// генерирует новый. Идентификатор кладётся в контекст и возвращается в ответе.
 func RequestID(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		id := strings.TrimSpace(r.Header.Get(HeaderRequestID))
@@ -31,14 +30,14 @@ func RequestID(next http.Handler) http.Handler {
 	})
 }
 
-// RequestIDFrom returns the request identifier from the context or an empty string.
+// RequestIDFrom возвращает идентификатор запроса из контекста или пустую строку.
 func RequestIDFrom(ctx context.Context) string {
 	id, _ := ctx.Value(requestIDKey{}).(string)
 
 	return id
 }
 
-// validRequestID accepts only short identifiers made of safe characters.
+// validRequestID принимает только короткие идентификаторы из безопасных символов.
 func validRequestID(id string) bool {
 	if id == "" || len(id) > maxRequestIDLen {
 		return false

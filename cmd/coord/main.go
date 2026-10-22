@@ -1,4 +1,4 @@
-// Command coord runs the coordination service.
+// Command coord запускает координационный сервис.
 package main
 
 import (
@@ -25,7 +25,7 @@ func main() {
 	}
 }
 
-// run loads the configuration and runs the server until a stop signal arrives.
+// run читает конфигурацию и работает до прихода сигнала остановки.
 func run() error {
 	cfg, err := config.Load(os.Getenv)
 	if err != nil {
@@ -41,7 +41,7 @@ func run() error {
 	return serve(ctx, cfg, log)
 }
 
-// serve starts the HTTP server and shuts it down gracefully when ctx is cancelled.
+// serve запускает HTTP-сервер и корректно останавливает его при отмене ctx.
 func serve(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
@@ -78,7 +78,7 @@ func serve(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
 	return closedAsNil(<-errCh)
 }
 
-// closedAsNil treats a normal server shutdown as success.
+// closedAsNil считает штатную остановку сервера успехом.
 func closedAsNil(err error) error {
 	if errors.Is(err, http.ErrServerClosed) {
 		return nil

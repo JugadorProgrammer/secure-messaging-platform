@@ -76,7 +76,7 @@ func TestLoggingLevels(t *testing.T) {
 
 func TestStatusWriterDefaults(t *testing.T) {
 	rec := httptest.NewRecorder()
-	sw := &statusWriter{ResponseWriter: rec, status: http.StatusOK}
+	sw := newStatusWriter(rec)
 
 	if _, err := sw.Write([]byte("abc")); err != nil {
 		t.Fatalf("Write() error = %v", err)
@@ -98,7 +98,7 @@ func TestStatusWriterDefaults(t *testing.T) {
 
 func TestStatusWriterIgnoresSecondHeader(t *testing.T) {
 	rec := httptest.NewRecorder()
-	sw := &statusWriter{ResponseWriter: rec, status: http.StatusOK}
+	sw := newStatusWriter(rec)
 
 	sw.WriteHeader(http.StatusCreated)
 	sw.WriteHeader(http.StatusInternalServerError)
@@ -113,7 +113,7 @@ func TestStatusWriterIgnoresSecondHeader(t *testing.T) {
 
 func TestStatusWriterFlush(t *testing.T) {
 	rec := httptest.NewRecorder()
-	sw := &statusWriter{ResponseWriter: rec, status: http.StatusOK}
+	sw := newStatusWriter(rec)
 
 	sw.Flush()
 

@@ -9,7 +9,15 @@ import (
 
 const testMasterKey = "00112233445566778899aabbccddeeff00112233445566778899aabbccddeeff"
 
-// baseEnv is the minimal set of required variables.
+// wantMasterKey — байтовое представление тестового ключа.
+var wantMasterKey = [masterKeyLen]byte{
+	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+	0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+	0x00, 0x11, 0x22, 0x33, 0x44, 0x55, 0x66, 0x77,
+	0x88, 0x99, 0xaa, 0xbb, 0xcc, 0xdd, 0xee, 0xff,
+}
+
+// baseEnv — минимальный набор обязательных переменных.
 func baseEnv() map[string]string {
 	return map[string]string{
 		"HTTP_ADDR":    ":8080",
@@ -56,7 +64,7 @@ func TestLoadFull(t *testing.T) {
 	}{
 		{"HTTPAddr", cfg.HTTPAddr, ":8080"},
 		{"DSN", cfg.DSN, env["DSN"]},
-		{"MasterKeyHex", cfg.MasterKeyHex(), testMasterKey},
+		{"MasterKey", cfg.MasterKey, wantMasterKey},
 		{"AccountsURL", cfg.AccountsURL.String(), "http://localhost:8081"},
 		{"CryptoURL", cfg.CryptoURL.String(), "http://localhost:8082"},
 		{"RSABits", cfg.RSABits, 4096},
@@ -81,9 +89,9 @@ func TestLoadFull(t *testing.T) {
 		}
 	}
 
-	if len(cfg.CORSOrigins) != 2 || cfg.CORSOrigins[0] != "http://localhost:5173" ||
-		cfg.CORSOrigins[1] != "https://example.org" {
-		t.Errorf("CORSOrigins = %v", cfg.CORSOrigins)
+	if len(cfg.CORSOrigins()) != 2 || cfg.CORSOrigins()[0] != "http://localhost:5173" ||
+		cfg.CORSOrigins()[1] != "https://example.org" {
+		t.Errorf("CORSOrigins() = %v", cfg.CORSOrigins())
 	}
 }
 
@@ -99,7 +107,7 @@ func TestLoadDefaults(t *testing.T) {
 		want any
 	}{
 		{"RSABits", cfg.RSABits, defaultRSABits},
-		{"CORSOrigins", len(cfg.CORSOrigins), 0},
+		{"CORSOrigins", len(cfg.CORSOrigins()), 0},
 		{"LogLevel", cfg.LogLevel, slog.LevelInfo},
 		{"HTTPReadHeaderTimeout", cfg.HTTPReadHeaderTimeout, 5 * time.Second},
 		{"HTTPReadTimeout", cfg.HTTPReadTimeout, 15 * time.Second},

@@ -1,7 +1,7 @@
-// Command healthcheck probes the coordination service over HTTP.
+// Command healthcheck проверяет координационный сервис по HTTP.
 //
-// The final image has no shell, curl or wget, so the Dockerfile HEALTHCHECK
-// calls this binary instead.
+// В итоговом образе нет ни shell, ни curl, ни wget, поэтому HEALTHCHECK
+// в Dockerfile вызывает этот бинарник.
 package main
 
 import (
@@ -29,7 +29,7 @@ func main() {
 	}
 }
 
-// run requests /health and succeeds only on a 200 status.
+// run запрашивает /health и считает успехом только статус 200.
 func run() error {
 	target, err := healthURL(os.Getenv("HTTP_ADDR"))
 	if err != nil {
@@ -39,13 +39,13 @@ func run() error {
 	ctx, cancel := context.WithTimeout(context.Background(), healthTimeout)
 	defer cancel()
 
-	//nolint:gosec // G704: the address is set by the operator through HTTP_ADDR, not by a request
+	//nolint:gosec // G704: адрес задаёт оператор через HTTP_ADDR, а не запрос
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, target, http.NoBody)
 	if err != nil {
 		return err
 	}
 
-	resp, err := http.DefaultClient.Do(req) //nolint:gosec // the address is set by the operator through HTTP_ADDR
+	resp, err := http.DefaultClient.Do(req) //nolint:gosec // адрес задаёт оператор через HTTP_ADDR
 	if err != nil {
 		return err
 	}
@@ -60,21 +60,22 @@ func run() error {
 	return nil
 }
 
-// healthURL builds the probe address from the service HTTP_ADDR.
+// healthURL строит адрес проверки из HTTP_ADDR сервиса.
 //
-// An address like ":8080" or "0.0.0.0:8080" means listening on all interfaces,
-// so the probe goes to loopback.
-func healthURL(raw string) (string, error) {
-	if raw == "" {
-		raw = defaultAddr
+// Адрес вида ":8080" или "0.0.0.0:8080" означает прослушивание всех интерфейсов,
+// поэтому проверка идёт на loopback.
+func healthURL(addr string) (string, error) {
+	target := addr
+	if target == "" {
+		target = defaultAddr
 	}
 
-	host, port, err := net.SplitHostPort(raw)
+	host, port, err := net.SplitHostPort(target)
 	if err != nil {
-		return "", fmt.Errorf("parse HTTP_ADDR %q: %w", raw, err)
+		return "", fmt.Errorf("parse HTTP_ADDR %q: %w", target, err)
 	}
 	if port == "" {
-		return "", fmt.Errorf("parse HTTP_ADDR %q: port is empty", raw)
+		return "", fmt.Errorf("parse HTTP_ADDR %q: port is empty", target)
 	}
 
 	if host == "" || host == unspecifiedAny || host == "::" {
