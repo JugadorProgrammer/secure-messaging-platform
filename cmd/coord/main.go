@@ -12,6 +12,7 @@ import (
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/api"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/store"
 )
 
 // @title       COORD API
@@ -37,6 +38,17 @@ func run() error {
 
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
+
+	// Без схемы сервис работать не может: ошибка миграции останавливает запуск.
+	st, err := store.NewStore(ctx, cfg.DSN, log)
+	if err != nil {
+		return err
+	}
+	defer st.Close()
+
+	if err := st.Migrate(ctx, cfg.RSABits); err != nil {
+		return err
+	}
 
 	return serve(ctx, cfg, log)
 }
