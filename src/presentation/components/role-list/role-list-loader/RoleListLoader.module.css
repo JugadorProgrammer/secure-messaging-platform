@@ -1,0 +1,27 @@
+.role-list-loader {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.role-list-loader__bar {
+    display: block;
+    height: 4.5rem;
+    background: var(--gray-200);
+    border-radius: 0.5rem;
+}
+
+.role-list-loader--failed {
+    background: var(--gray-300);
+    border-radius: 0.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.role-list-loader__message {
+    font-size: 0.875rem;
+    font-weight: bold;
+    color: var(--black-700);
+}

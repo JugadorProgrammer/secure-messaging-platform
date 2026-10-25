@@ -1,0 +1,18 @@
+.role-list-item {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  background-color: var(--gray-300);
+  padding: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.role-list-item__name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.role-list-item__description {
+  margin: 0;
+}
