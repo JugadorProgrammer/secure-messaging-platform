@@ -1,3 +1,22 @@
+@import '@fontsource/roboto/400.css';
+@import '@fontsource/roboto/600.css';
+
+:root{
+  --white: #eeeeee;
+
+  --gray-100: #f1f1f1;
+  --gray-200: #e4e4e4;
+  --gray-300: #dddddd;
+  --gray-400: #b9b9b9;
+  --gray-600: #a1a1a1;
+
+  --red: #d98a8a;
+
+  --black-700: #000000;
+
+  font-family: 'Roboto', sans-serif;
+}
+
 *,
 *::before,
 *::after {
@@ -14,6 +33,12 @@ body {
 }
 
 body {
-  font-family: sans-serif;
   line-height: 1.5;
+}
+
+button,
+input,
+textarea,
+select {
+  font-family: inherit;
 }
