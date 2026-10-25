@@ -428,3 +428,9 @@ FodyWeavers.xsd
 #*.lscache
 
 .idea
+
+/.next/
+/out/
+/build
+*.tsbuildinfo
+next-env.d.ts
