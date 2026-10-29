@@ -1,0 +1,30 @@
+.encryption-method-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.encryption-method-panel__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.encryption-method-panel__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.encryption-method-panel__bar {
+  display: block;
+  height: 4.5rem;
+  background: var(--gray-200);
+  border-radius: 0.5rem;
+}
+
+.encryption-method-panel__failed {
+  background: var(--gray-300);
+  border-radius: 0.5rem;
+  min-height: 4.5rem;
+}

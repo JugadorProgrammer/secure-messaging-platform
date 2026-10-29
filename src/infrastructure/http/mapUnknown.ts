@@ -5,6 +5,15 @@ type FieldReader<T> = (value: unknown, name: string) => Result<T>;
 export function mapString(value: unknown, name: string): Result<string> {
   if (typeof value !== 'string' || value.trim() === '') {
     return Result.error(new Error(`Поле ${name} должно быть непустой строкой`));
+
+  }
+
+  return Result.success(value);
+}
+
+export function mapBoolean(value: unknown, name: string): Result<boolean> {
+  if (typeof value !== 'boolean') {
+    return Result.error(new Error(`Поле ${name} должно быть логическим значением`));
   }
 
   return Result.success(value);

@@ -2,6 +2,7 @@ import 'server-only';
 
 import {asClass, asFunction, createContainer, InjectionMode} from 'awilix';
 
+import {EncryptionMethodService} from '@/application/EncryptionMethodService';
 import {RoleService} from '@/application/RoleService';
 import {HttpCoordGateway} from '@/infrastructure/http/HttpCoordGateway';
 
@@ -11,6 +12,7 @@ export const appConfig = createContainer({
   coordUrl: asFunction(readCoordUrl).singleton(),
   coordGateway: asClass(HttpCoordGateway).singleton(),
   roleService: asClass(RoleService).singleton(),
+  encryptionMethodService: asClass(EncryptionMethodService).singleton(),
 });
 
 function readCoordUrl(): string {
