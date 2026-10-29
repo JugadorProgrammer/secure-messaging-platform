@@ -1,0 +1,51 @@
+
+services:
+  postgres:
+    image: postgres:17
+    container_name: smp-auth-postgres
+    restart: unless-stopped
+
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:?required}
+      POSTGRES_USER: ${POSTGRES_USER:?required}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
+
+    ports:
+      - "127.0.0.1:5432:5432"
+
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -U "$$POSTGRES_USER" -d "$$POSTGRES_DB"
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
+  auth:
+    build:
+      context: .
+      dockerfile: Dockerfile
+
+    container_name: smp-auth
+    restart: unless-stopped
+
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+    environment:
+      AUTH_CONFIG_PATH: config/config.docker.json
+      AUTH_DB_HOST: postgres
+      AUTH_DB_PORT: "5432"
+      AUTH_DB_NAME: ${POSTGRES_DB:?required}
+      AUTH_DB_USER: ${POSTGRES_USER:?required}
+      PGPASSWORD: ${POSTGRES_PASSWORD:?required}
+
+    ports:
+      - "127.0.0.1:8080:8080"
+
+volumes:
+  postgres_data:
