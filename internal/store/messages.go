@@ -6,9 +6,17 @@ import (
 	"fmt"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgconn"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
+
+// maxListLimit — верхняя граница размера страницы из contracts.md, раздел 11.
+const maxListLimit = 100
+
+// pgForeignKeyViolation — SQLSTATE нарушения внешнего ключа. В messages он один:
+// method → methods(code).
+const pgForeignKeyViolation = "23503"
 
 const messageColumns = `id, owner_id, owner_login, method, key_size, plaintext, ciphertext,
 kuz_key_sealed, kuz_iv, keygen_ms, encrypt_ms, decrypt_ms, created_at`
@@ -28,6 +36,11 @@ RETURNING id`
 		m.OwnerID, m.OwnerLogin, m.Method, m.KeySize, m.Plaintext, m.Ciphertext,
 		m.KuzKeySealed, m.KuzIV, m.KeygenMs, m.EncryptMs, m.DecryptMs,
 	).Scan(&id)
+
+	var pgErr *pgconn.PgError
+	if errors.As(err, &pgErr) && pgErr.Code == pgForeignKeyViolation {
+		return 0, fmt.Errorf("store: create message: unknown method %q: %w", m.Method, ports.ErrInvalidArgument)
+	}
 	if err != nil {
 		return 0, fmt.Errorf("store: create message: %w", err)
 	}
@@ -59,7 +72,17 @@ func (s *Store) GetMessage(ctx context.Context, id int64) (*ports.Message, error
 // как «все» не используется: user_id 0 занят системным ключом.
 // При равном created_at порядок задаёт id, иначе страницы могли бы
 // пересекаться.
+//
+// limit вне 1..100 или отрицательный offset — ports.ErrInvalidArgument:
+// пустая страница при limit = 0 выглядела бы для клиента как «сообщений нет».
 func (s *Store) ListMessages(ctx context.Context, ownerID *int64, limit, offset int) ([]*ports.Message, error) {
+	if limit < 1 || limit > maxListLimit {
+		return nil, fmt.Errorf("store: list messages: limit %d out of range 1..%d: %w", limit, maxListLimit, ports.ErrInvalidArgument)
+	}
+	if offset < 0 {
+		return nil, fmt.Errorf("store: list messages: negative offset %d: %w", offset, ports.ErrInvalidArgument)
+	}
+
 	var (
 		rows pgx.Rows
 		err  error
@@ -76,7 +99,9 @@ WHERE owner_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3`, *owne
 		return nil, fmt.Errorf("store: list messages: %w", err)
 	}
 
-	var msgList []*ports.Message
+	// Не nil, чтобы пустая страница кодировалась в JSON как [], а не null,
+	// так же как у Methods через pgx.CollectRows.
+	msgList := make([]*ports.Message, 0, limit)
 
 	for rows.Next() {
 		m, err := scanMessage(rows)

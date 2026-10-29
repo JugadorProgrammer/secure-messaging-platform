@@ -97,6 +97,41 @@ func TestMigrate(t *testing.T) {
 	}
 }
 
+func TestMigrateConcurrent(t *testing.T) {
+	const replicas = 5
+
+	st := newTestStore(t)
+	ctx := t.Context()
+
+	// Возвращаем базу к пустому состоянию, чтобы все реплики стартовали
+	// на чистой схеме одновременно.
+	_, err := st.pool.Exec(ctx, `DROP TABLE IF EXISTS messages, ops_log, user_keys, methods, schema_migrations CASCADE`)
+	if err != nil {
+		t.Fatalf("drop schema: %v", err)
+	}
+
+	errs := make(chan error, replicas)
+	for range replicas {
+		go func() {
+			errs <- st.Migrate(ctx, testRSABits)
+		}()
+	}
+
+	for range replicas {
+		if err := <-errs; err != nil {
+			t.Errorf("concurrent Migrate() error = %v", err)
+		}
+	}
+
+	var applied int
+	if err := st.pool.QueryRow(ctx, `SELECT count(*) FROM schema_migrations`).Scan(&applied); err != nil {
+		t.Fatalf("count schema_migrations: %v", err)
+	}
+	if applied != 1 {
+		t.Errorf("schema_migrations rows = %d, want 1", applied)
+	}
+}
+
 func TestMigrateKeepsDisabledMethod(t *testing.T) {
 	st := newTestStore(t)
 	ctx := t.Context()
@@ -366,8 +401,9 @@ func TestCreateMessageUnknownMethod(t *testing.T) {
 	in := testMessage(5)
 	in.Method = "aes"
 
-	if _, err := st.CreateMessage(t.Context(), in); err == nil {
-		t.Fatal("CreateMessage() error = nil, want foreign key violation")
+	_, err := st.CreateMessage(t.Context(), in)
+	if !errors.Is(err, ports.ErrInvalidArgument) {
+		t.Fatalf("CreateMessage() error = %v, want ErrInvalidArgument", err)
 	}
 }
 
@@ -423,6 +459,9 @@ func TestListMessages(t *testing.T) {
 				t.Fatalf("ListMessages() error = %v", err)
 			}
 
+			if got == nil {
+				t.Fatal("ListMessages() = nil, want non-nil slice")
+			}
 			if len(got) != len(tt.wantIDs) {
 				t.Fatalf("len(ListMessages()) = %d, want %d", len(got), len(tt.wantIDs))
 			}
@@ -430,6 +469,33 @@ func TestListMessages(t *testing.T) {
 				if m.ID != tt.wantIDs[i] {
 					t.Errorf("ListMessages()[%d].ID = %d, want %d", i, m.ID, tt.wantIDs[i])
 				}
+			}
+		})
+	}
+}
+
+func TestListMessagesInvalidArgument(t *testing.T) {
+	tests := []struct {
+		name   string
+		limit  int
+		offset int
+	}{
+		{name: "нулевой limit", limit: 0},
+		{name: "отрицательный limit", limit: -1},
+		{name: "limit больше 100", limit: 101},
+		{name: "отрицательный offset", limit: 10, offset: -1},
+	}
+
+	st := newTestStore(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := st.ListMessages(t.Context(), nil, tt.limit, tt.offset)
+			if !errors.Is(err, ports.ErrInvalidArgument) {
+				t.Fatalf("ListMessages() error = %v, want ErrInvalidArgument", err)
+			}
+			if got != nil {
+				t.Errorf("ListMessages() = %v, want nil on error", got)
 			}
 		})
 	}

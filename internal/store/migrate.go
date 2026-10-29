@@ -6,9 +6,14 @@ import (
 	"io/fs"
 
 	"github.com/jackc/pgx/v5"
+	"github.com/jackc/pgx/v5/pgxpool"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/migrations"
 )
+
+// migrationLockKey — ключ pg_advisory_lock для миграций. Значение произвольное,
+// важно только, чтобы все реплики сервиса использовали одно и то же.
+const migrationLockKey int64 = 0x736d702d636f6f72 // "smp-coor"
 
 const createSchemaMigrations = `
 CREATE TABLE IF NOT EXISTS schema_migrations (
@@ -28,9 +33,30 @@ ON CONFLICT (code) DO UPDATE SET key_size = EXCLUDED.key_size`
 // в schema_migrations. Каждая миграция выполняется в своей транзакции:
 // при ошибке схема остаётся в последнем согласованном состоянии.
 //
+// Реплики, стартующие одновременно, сериализуются через pg_advisory_lock.
+// Список применённых версий читается уже под блокировкой, поэтому вторая
+// реплика видит работу первой и ничего не применяет повторно.
+//
 // rsaBits — размер ключа RSA из конфигурации, попадает в справочник методов.
 func (s *Store) Migrate(ctx context.Context, rsaBits int) error {
-	if _, err := s.pool.Exec(ctx, createSchemaMigrations); err != nil {
+	conn, err := s.pool.Acquire(ctx)
+	if err != nil {
+		return fmt.Errorf("store: acquire connection for migrations: %w", err)
+	}
+	defer conn.Release()
+
+	// Блокировка сессионная: она живёт на этом соединении, поэтому все шаги
+	// ниже выполняются через conn, а не через пул.
+	if _, err := conn.Exec(ctx, `SELECT pg_advisory_lock($1)`, migrationLockKey); err != nil {
+		return fmt.Errorf("store: lock migrations: %w", err)
+	}
+	defer func() {
+		// Снимаем блокировку и при отменённом ctx, иначе она останется
+		// на соединении, которое вернётся в пул.
+		_, _ = conn.Exec(context.WithoutCancel(ctx), `SELECT pg_advisory_unlock($1)`, migrationLockKey)
+	}()
+
+	if _, err := conn.Exec(ctx, createSchemaMigrations); err != nil {
 		return fmt.Errorf("store: create schema_migrations: %w", err)
 	}
 
@@ -39,7 +65,7 @@ func (s *Store) Migrate(ctx context.Context, rsaBits int) error {
 		return fmt.Errorf("store: list migrations: %w", err)
 	}
 
-	applied, err := s.appliedVersions(ctx)
+	applied, err := appliedVersions(ctx, conn)
 	if err != nil {
 		return err
 	}
@@ -49,7 +75,7 @@ func (s *Store) Migrate(ctx context.Context, rsaBits int) error {
 			continue
 		}
 
-		if err := s.applyMigration(ctx, name, rsaBits); err != nil {
+		if err := applyMigration(ctx, conn, name, rsaBits); err != nil {
 			s.log.Error("migration failed", "version", name, "err", err)
 
 			return fmt.Errorf("store: ошибка применения миграции %s: %w", name, err)
@@ -61,8 +87,8 @@ func (s *Store) Migrate(ctx context.Context, rsaBits int) error {
 	return nil
 }
 
-func (s *Store) appliedVersions(ctx context.Context) (map[string]bool, error) {
-	rows, err := s.pool.Query(ctx, `SELECT version FROM schema_migrations`)
+func appliedVersions(ctx context.Context, conn *pgxpool.Conn) (map[string]bool, error) {
+	rows, err := conn.Query(ctx, `SELECT version FROM schema_migrations`)
 	if err != nil {
 		return nil, fmt.Errorf("store: read schema_migrations: %w", err)
 	}
@@ -80,13 +106,13 @@ func (s *Store) appliedVersions(ctx context.Context) (map[string]bool, error) {
 	return applied, nil
 }
 
-func (s *Store) applyMigration(ctx context.Context, name string, rsaBits int) error {
+func applyMigration(ctx context.Context, conn *pgxpool.Conn, name string, rsaBits int) error {
 	body, err := fs.ReadFile(migrations.FS, name)
 	if err != nil {
 		return err
 	}
 
-	tx, err := s.pool.Begin(ctx)
+	tx, err := conn.Begin(ctx)
 	if err != nil {
 		return err
 	}

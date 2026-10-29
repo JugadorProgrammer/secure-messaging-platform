@@ -43,6 +43,10 @@ var (
 	ErrCryptoBadInput    = errors.New("crypto: bad input")
 	ErrCryptoUnavailable = errors.New("crypto: unavailable")
 	ErrUnauthorized      = errors.New("unauthorized")
+
+	// ErrInvalidArgument — аргумент нарушает контракт метода: limit вне 1..100,
+	// неизвестный код метода и т.п. Хендлер отображает её в 400 validation.
+	ErrInvalidArgument = errors.New("invalid argument")
 )
 
 // MethodRow — строка таблицы methods. Имя Method уже занято строковым типом.
@@ -96,10 +100,12 @@ type Store interface {
 	// UserKey возвращает ErrNotFound, если записи нет.
 	UserKey(ctx context.Context, userID int64) (*UserKey, error)
 	SaveUserKey(ctx context.Context, k *UserKey) error
+	// CreateMessage возвращает ErrInvalidArgument, если m.Method нет в methods.
 	CreateMessage(ctx context.Context, m *Message) (int64, error)
 	GetMessage(ctx context.Context, id int64) (*Message, error)
 	// ListMessages: ownerID == nil — все сообщения (admin), иначе только свои.
-	// Сортировка: created_at DESC, id DESC. limit 1..100, offset >= 0.
+	// Сортировка: created_at DESC, id DESC. limit 1..100, offset >= 0,
+	// иначе ErrInvalidArgument. Пустой результат — пустой слайс, не nil.
 	ListMessages(ctx context.Context, ownerID *int64, limit, offset int) ([]*Message, error)
 	SetDecryptMs(ctx context.Context, id, ms int64) error
 	// LogOp: userID == nil — анонимный субъект (NULL в БД), не 0.
