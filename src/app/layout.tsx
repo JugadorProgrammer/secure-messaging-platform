@@ -1,6 +1,8 @@
 import type {Metadata} from 'next';
 import type {ReactNode} from 'react';
 
+import {Header} from '@/presentation/components/header/Header';
+
 import './globals.css';
 
 export const metadata: Metadata = {
@@ -15,7 +17,10 @@ type RootLayoutProps = {
 export default function RootLayout({children}: RootLayoutProps) {
   return (
     <html lang="ru">
-      <body>{children}</body>
+      <body>
+        <Header isAuthorized={false} />
+        {children}
+      </body>
     </html>
   );
 }
