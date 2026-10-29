@@ -434,3 +434,5 @@ FodyWeavers.xsd
 /build
 *.tsbuildinfo
 next-env.d.ts
+*storybook.log
+storybook-static

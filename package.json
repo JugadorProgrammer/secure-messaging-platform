@@ -1,0 +1,34 @@
+{
+  "name": "smp-front",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "eslint",
+    "storybook": "storybook dev -p 6006",
+    "build-storybook": "storybook build"
+  },
+  "dependencies": {
+    "@fontsource/roboto": "^5.3.0",
+    "awilix": "^13.0.5",
+    "clsx": "^2.1.1",
+    "next": "16.4.3",
+    "react": "19.3.0",
+    "react-dom": "19.3.0",
+    "server-only": "^0.0.1"
+  },
+  "devDependencies": {
+    "@storybook/nextjs-vite": "^10.6.3",
+    "@types/node": "^22.20.5",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "16.4.3",
+    "eslint-plugin-storybook": "^10.6.3",
+    "storybook": "^10.6.3",
+    "typescript": "^5",
+    "vite": "^8.3.5"
+  }
+}

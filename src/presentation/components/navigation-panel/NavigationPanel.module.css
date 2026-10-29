@@ -1,0 +1,21 @@
+.navigation-panel {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  border-radius: 0.5rem;
+}
+
+.navigation-panel__link {
+  padding: 0.5rem 1rem;
+  background: var(--gray-300);
+  border-radius: 0.5rem;
+  color: var(--black-700);
+  font-family: inherit;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.navigation-panel__link--primary {
+  background: var(--black-700);
+  color: var(--white);
+}
