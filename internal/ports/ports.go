@@ -50,11 +50,13 @@ var (
 )
 
 // MethodRow — строка таблицы methods. Имя Method уже занято строковым типом.
+//
+// Теги db задают имена колонок для pgx.RowToStructByName в internal/store.
 type MethodRow struct {
-	Code    string
-	Title   string
-	KeySize int
-	Enabled bool
+	Code    string `db:"code"`
+	Title   string `db:"title"`
+	KeySize int    `db:"key_size"`
+	Enabled bool   `db:"enabled"`
 }
 
 // UserKey — ключ RSA пользователя. Закрытый ключ хранится только запечатанным.

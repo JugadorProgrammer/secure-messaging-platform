@@ -16,12 +16,9 @@ func (s *Store) Methods(ctx context.Context) ([]ports.MethodRow, error) {
 		return nil, fmt.Errorf("store: query methods: %w", err)
 	}
 
-	methods, err := pgx.CollectRows(rows, func(row pgx.CollectableRow) (ports.MethodRow, error) {
-		var m ports.MethodRow
-		err := row.Scan(&m.Code, &m.Title, &m.KeySize, &m.Enabled)
-
-		return m, err
-	})
+	// Сопоставление по тегам db, а не по позиции: порядок колонок в SELECT
+	// может меняться, а лишняя или пропущенная колонка даст ошибку, а не тихий сдвиг.
+	methods, err := pgx.CollectRows(rows, pgx.RowToStructByName[ports.MethodRow])
 	if err != nil {
 		return nil, fmt.Errorf("store: scan methods: %w", err)
 	}

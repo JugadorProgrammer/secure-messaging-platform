@@ -75,10 +75,9 @@ func (s *Store) Migrate(ctx context.Context, rsaBits int) error {
 			continue
 		}
 
+		// Не логируем здесь: ошибку пишет в лог run, иначе одно событие даст две записи.
 		if err := applyMigration(ctx, conn, name, rsaBits); err != nil {
-			s.log.Error("migration failed", "version", name, "err", err)
-
-			return fmt.Errorf("store: ошибка применения миграции %s: %w", name, err)
+			return fmt.Errorf("store: apply migration %s: %w", name, err)
 		}
 
 		s.log.Info("migration applied", "version", name)
@@ -109,31 +108,35 @@ func appliedVersions(ctx context.Context, conn *pgxpool.Conn) (map[string]bool, 
 func applyMigration(ctx context.Context, conn *pgxpool.Conn, name string, rsaBits int) error {
 	body, err := fs.ReadFile(migrations.FS, name)
 	if err != nil {
-		return err
+		return fmt.Errorf("read file: %w", err)
 	}
 
 	tx, err := conn.Begin(ctx)
 	if err != nil {
-		return err
+		return fmt.Errorf("begin: %w", err)
 	}
 	defer func() {
 		_ = tx.Rollback(ctx)
 	}()
 
 	if _, err := tx.Exec(ctx, string(body)); err != nil {
-		return err
+		return fmt.Errorf("exec body: %w", err)
 	}
 
 	// сид методов в той же транзакции, что и схема
 	if name == "001_init.sql" {
 		if _, err := tx.Exec(ctx, seedMethods, rsaBits); err != nil {
-			return err
+			return fmt.Errorf("seed methods: %w", err)
 		}
 	}
 
 	if _, err := tx.Exec(ctx, `INSERT INTO schema_migrations (version) VALUES ($1)`, name); err != nil {
-		return err
+		return fmt.Errorf("record version: %w", err)
 	}
 
-	return tx.Commit(ctx)
+	if err := tx.Commit(ctx); err != nil {
+		return fmt.Errorf("commit: %w", err)
+	}
+
+	return nil
 }
