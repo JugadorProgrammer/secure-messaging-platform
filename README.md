@@ -10,7 +10,7 @@ PDF с подписью и проверяет подпись загруженн�
 ## Состояние ветки
 
 Реализован каркас сервиса: конфигурация, единый формат ответов и ошибок,
-middleware, проверки доступности. Прикладных маршрутов пока нет.
+middleware, проверки доступности, схема БД и хранилище. Прикладных маршрутов пока нет.
 
 | Маршрут | Назначение |
 |---|---|
@@ -153,6 +153,27 @@ make check       # fmt-check + vet + lint + test
 `make test` и `make cover` используют `-race`, для этого нужен cgo:
 на Windows — компилятор C (`gcc`) и `CGO_ENABLED=1`.
 
+Тесты `internal/store` работают с настоящим PostgreSQL и требуют `TEST_DSN`.
+Без переменной они пропускаются. Отдельная база для тестов:
+
+```powershell
+docker compose exec postgres createdb -U coord coord_test
+$env:TEST_DSN="postgres://coord:coord_local@localhost:5432/coord_test?sslmode=disable"
+go test -race ./internal/store/...
+```
+
+## Миграции
+
+Схема описана в `migrations/*.sql` и встроена в бинарь. При старте сервис
+применяет файлы, которых ещё нет в таблице `schema_migrations`, в порядке имён,
+каждый в отдельной транзакции. Ошибка миграции останавливает запуск.
+
+Вместе с первой миграцией заполняется справочник `methods`: `rsa` с размером
+ключа из `RSA_BITS` и `kuznyechik` с ключом 256 бит.
+
+Новая миграция — новый файл со следующим номером, например `002_add_index.sql`.
+Применённые файлы не редактируются.
+
 ## Структура
 
 ```text
@@ -161,10 +182,13 @@ cmd/healthcheck/     проверка доступности для HEALTHCHECK
 internal/config/     конфигурация из env и её валидация
 internal/httpx/      единый формат ответов и ошибок, middleware
 internal/api/        сборка маршрутов; routes_deva.go и routes_devb.go — зоны разработчиков
+internal/ports/      доменные типы, интерфейс Store, sentinel-ошибки
+internal/store/      реализация Store на PostgreSQL (pgx), миграции
+migrations/          SQL-миграции, встроенные через //go:embed
 ```
 
-Пакеты `internal/ports`, `internal/sealed`, `internal/pdfsig`, `internal/store`,
-`internal/cryptoclient` и остальные прикладные пакеты появятся в следующих задачах.
+Пакеты `internal/sealed`, `internal/pdfsig`, `internal/cryptoclient`
+и остальные прикладные пакеты появятся в следующих задачах.
 
 ## Формат ошибок
 
