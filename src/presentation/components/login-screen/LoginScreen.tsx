@@ -1,9 +1,11 @@
+import {LoginForm} from '@/presentation/components/login-form/LoginForm';
+
 import styles from './LoginScreen.module.css';
 
 export function LoginScreen() {
   return (
     <main className={styles['login-screen']}>
-      <h1 className={styles['login-screen__title']}>Вход</h1>
+      <LoginForm />
     </main>
   );
 }

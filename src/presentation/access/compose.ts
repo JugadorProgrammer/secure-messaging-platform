@@ -1,7 +1,7 @@
 export function compose<Result>(
   ...functions: [
     ...Array<(...args: unknown[]) => unknown>,
-    (...args: unknown[]) => Result | Promise<Result>,
+    (...args: never[]) => Result | Promise<Result>,
   ]
 ) {
   return (...initial: unknown[]): Promise<Awaited<Result>> =>
@@ -12,7 +12,7 @@ export function compose<Result>(
             return value;
           }
 
-          return fn(...(value as unknown[]));
+          return (fn as (...args: unknown[]) => unknown)(...(value as unknown[]));
         }),
       Promise.resolve(initial),
     ) as Promise<Awaited<Result>>;
