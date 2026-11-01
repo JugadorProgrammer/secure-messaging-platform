@@ -1,9 +1,11 @@
 import {cookies} from 'next/headers';
 import {redirect} from 'next/navigation';
 
-const SESSION_COOKIE = 'session';
+import {SESSION_COOKIE} from '@/infrastructure/auth/session';
 
-export async function GET() {
+import {auth, compose} from '@/presentation/access/auth';
+
+export const GET = compose(auth(), async function GET() {
   (await cookies()).delete(SESSION_COOKIE);
-  redirect('/');
-}
+  redirect('/login');
+});
