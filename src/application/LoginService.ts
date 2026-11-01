@@ -1,18 +1,22 @@
-import type {ICoordGateway, LoginCredentials} from '@/application/ICoordGateway';
+import type {EmailCode, IAuthGateway, LoginCredentials} from '@/application/IAuthGateway';
 import type {Result} from '@/application/Result';
 
 type LoginServiceDependencies = {
-  coordGateway: ICoordGateway;
+  authGateway: IAuthGateway;
 };
 
 export class LoginService {
-  private readonly coordGateway: ICoordGateway;
+  private readonly authGateway: IAuthGateway;
 
-  constructor({coordGateway}: LoginServiceDependencies) {
-    this.coordGateway = coordGateway;
+  constructor({authGateway}: LoginServiceDependencies) {
+    this.authGateway = authGateway;
   }
 
-  login(credentials: LoginCredentials): Promise<Result<{token: string}>> {
-    return this.coordGateway.login(credentials);
+  login(credentials: LoginCredentials): Promise<Result<readonly string[]>> {
+    return this.authGateway.login(credentials);
+  }
+
+  confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>> {
+    return this.authGateway.confirmEmailCode(cookie, emailCode);
   }
 }

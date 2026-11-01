@@ -1,10 +1,10 @@
 import {NextResponse} from 'next/server';
 
-import type {LoginCredentials} from '@/application/ICoordGateway';
+import type {LoginCredentials} from '@/application/IAuthGateway';
 
 import {appConfig} from '@/appconfig';
-import {SESSION_COOKIE} from '@/infrastructure/auth/session';
 import {loginCredentialsSchema} from '@/infrastructure/http/loginCredentialsSchema';
+import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
@@ -21,12 +21,7 @@ export const POST = compose(
       }
 
       const response = new NextResponse(null, {status: 204});
-
-      response.cookies.set(SESSION_COOKIE, result.success.token, {
-        httpOnly: true,
-        sameSite: 'lax',
-        path: '/',
-      });
+      writeSetCookies(response, result.success);
 
       return response;
     } catch (error) {

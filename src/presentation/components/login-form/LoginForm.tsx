@@ -1,92 +1,56 @@
 'use client';
 
 import {useState} from 'react';
-import type {ChangeEvent, FormEvent} from 'react';
-import Link from 'next/link';
+import type {ComponentType} from 'react';
 import {useRouter} from 'next/navigation';
 
-import {login as sendLogin} from '@/presentation/api/login';
-import {Notification} from '@/presentation/components/notification/Notification';
+import {LoginEmailCodeForm} from '@/presentation/components/login-email-code-form/LoginEmailCodeForm';
+import {LoginPasswordForm} from '@/presentation/components/login-password-form/LoginPasswordForm';
 
 import styles from './LoginForm.module.css';
 
-type LoginFailure = {
-  notificationDate: number;
-  message: string;
+type LoginStep = 'password' | 'emailCode';
+
+type LoginStepFormProps = {
+  onSuccess: () => void;
 };
 
-export function LoginForm() {
+const forms: Record<LoginStep, ComponentType<LoginStepFormProps>> = {
+  password: LoginPasswordForm,
+  emailCode: LoginEmailCodeForm,
+};
+
+const nextStep: Record<LoginStep, LoginStep | null> = {
+  password: 'emailCode',
+  emailCode: null,
+};
+
+type LoginFormProps = {
+  initialStep?: LoginStep;
+};
+
+export function LoginForm({initialStep = 'password'}: LoginFormProps) {
   const router = useRouter();
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
-  const [failure, setFailure] = useState<LoginFailure | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [step, setStep] = useState<LoginStep>(initialStep);
 
-  function handleLoginChange(event: ChangeEvent<HTMLInputElement>): void {
-    setLogin(event.target.value);
-  }
+  function handleSuccess(): void {
+    const following = nextStep[step];
 
-  function handlePasswordChange(event: ChangeEvent<HTMLInputElement>): void {
-    setPassword(event.target.value);
-  }
-
-  async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
-    event.preventDefault();
-    setIsSubmitting(true);
-    setFailure(null);
-
-    const result = await sendLogin({login, password});
-
-    setPassword('');
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
+    if (following === null) {
+      router.push('/');
+      router.refresh();
       return;
     }
 
-    router.push('/');
-    router.refresh();
+    setStep(following);
   }
 
+  const StepForm = forms[step];
+
   return (
-    <form className={styles['login-form']} onSubmit={handleSubmit}>
+    <section className={styles['login-form']}>
       <h1 className={styles['login-form__title']}>Вход</h1>
-      <label className={styles['login-form__field']}>
-        <span className={styles['login-form__label']}>Логин</span>
-        <input
-          className={styles['login-form__input']}
-          name="login"
-          autoComplete="username"
-          value={login}
-          onChange={handleLoginChange}
-          required
-        />
-      </label>
-      <label className={styles['login-form__field']}>
-        <span className={styles['login-form__label']}>Пароль</span>
-        <input
-          className={styles['login-form__input']}
-          name="password"
-          type="password"
-          autoComplete="current-password"
-          value={password}
-          onChange={handlePasswordChange}
-          required
-        />
-      </label>
-      <button className={styles['login-form__submit']} type="submit" disabled={isSubmitting}>
-        Войти
-      </button>
-      <Link className={styles['login-form__link']} href="/recovery">
-        Восстановление пароля
-      </Link>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
-      ) : null}
-    </form>
+      <StepForm onSuccess={handleSuccess} />
+    </section>
   );
 }
