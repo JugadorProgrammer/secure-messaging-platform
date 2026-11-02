@@ -4,12 +4,13 @@ import {useState} from 'react';
 import type {ComponentType} from 'react';
 import {useRouter} from 'next/navigation';
 
+import {LoginDisposableCodeForm} from '@/presentation/components/login-disposable-code-form/LoginDisposableCodeForm';
 import {LoginEmailCodeForm} from '@/presentation/components/login-email-code-form/LoginEmailCodeForm';
 import {LoginPasswordForm} from '@/presentation/components/login-password-form/LoginPasswordForm';
 
 import styles from './LoginForm.module.css';
 
-type LoginStep = 'password' | 'emailCode';
+type LoginStep = 'password' | 'emailCode' | 'disposableCode';
 
 type LoginStepFormProps = {
   onSuccess: () => void;
@@ -18,11 +19,13 @@ type LoginStepFormProps = {
 const forms: Record<LoginStep, ComponentType<LoginStepFormProps>> = {
   password: LoginPasswordForm,
   emailCode: LoginEmailCodeForm,
+  disposableCode: LoginDisposableCodeForm,
 };
 
 const nextStep: Record<LoginStep, LoginStep | null> = {
   password: 'emailCode',
-  emailCode: null,
+  emailCode: 'disposableCode',
+  disposableCode: null,
 };
 
 type LoginFormProps = {

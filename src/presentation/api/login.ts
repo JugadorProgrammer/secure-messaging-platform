@@ -2,6 +2,7 @@ import {Result} from '@/application/Result';
 
 const LOGIN_PATH = '/api/login';
 const CONFIRM_EMAIL_CODE_PATH = '/api/confirmEmailCode';
+const CONFIRM_DISPOSABLE_CODE_PATH = '/api/confirmDisposableCode';
 
 type LoginRequest = {
   login: string;
@@ -50,5 +51,27 @@ export async function confirmEmailCode(code: string): Promise<Result<void>> {
     return Result.error(new Error('Не удалось подтвердить код.'));
   } catch {
     return Result.error(new Error('Не удалось подтвердить код.'));
+  }
+}
+
+export async function confirmDisposableCode(code: string): Promise<Result<void>> {
+  try {
+    const response = await fetch(CONFIRM_DISPOSABLE_CODE_PATH, {
+      method: 'POST',
+      headers: {
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        code,
+      }),
+    });
+
+    if (response.ok) {
+      return Result.success(undefined);
+    }
+
+    return Result.error(new Error('Не удалось подтвердить код восстановления.'));
+  } catch {
+    return Result.error(new Error('Не удалось подтвердить код восстановления.'));
   }
 }

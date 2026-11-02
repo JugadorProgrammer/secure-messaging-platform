@@ -3,7 +3,7 @@ import {mocked} from 'storybook/test';
 
 import {Result} from '@/application/Result';
 
-import {confirmEmailCode, login} from '@/presentation/api/login';
+import {confirmDisposableCode, confirmEmailCode, login} from '@/presentation/api/login';
 
 import {LoginForm} from './LoginForm';
 
@@ -19,6 +19,7 @@ const meta = {
   beforeEach() {
     mocked(login).mockResolvedValue(Result.success(undefined));
     mocked(confirmEmailCode).mockResolvedValue(Result.success(undefined));
+    mocked(confirmDisposableCode).mockResolvedValue(Result.success(undefined));
   },
 } satisfies Meta<typeof LoginForm>;
 
@@ -34,5 +35,12 @@ export const EmailCode: Story = {
   name: 'Второй фактор',
   args: {
     initialStep: 'emailCode',
+  },
+};
+
+export const DisposableCode: Story = {
+  name: 'Третий фактор',
+  args: {
+    initialStep: 'disposableCode',
   },
 };

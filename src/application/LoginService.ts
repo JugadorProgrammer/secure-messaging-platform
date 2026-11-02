@@ -1,4 +1,4 @@
-import type {EmailCode, IAuthGateway, LoginCredentials} from '@/application/IAuthGateway';
+import type {DisposableCode, EmailCode, IAuthGateway, LoginCredentials} from '@/application/IAuthGateway';
 import type {Result} from '@/application/Result';
 
 type LoginServiceDependencies = {
@@ -18,5 +18,9 @@ export class LoginService {
 
   confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>> {
     return this.authGateway.confirmEmailCode(cookie, emailCode);
+  }
+
+  confirmDisposableCode(cookie: string, disposableCode: DisposableCode): Promise<Result<readonly string[]>> {
+    return this.authGateway.confirmDisposableCode(cookie, disposableCode);
   }
 }
