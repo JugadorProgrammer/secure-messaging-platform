@@ -25,6 +25,12 @@ export type NewPassword = {
   password: string;
 };
 
+export type Registration = {
+  login: string;
+  email: string;
+  password: string;
+};
+
 export interface IAuthGateway {
   login(credentials: LoginCredentials): Promise<Result<readonly string[]>>;
   confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>>;
@@ -32,4 +38,5 @@ export interface IAuthGateway {
   restorePassword(restorePasswordRequest: RestorePasswordRequest): Promise<Result<void>>;
   confirmRestoreCode(restoreCode: RestoreCode): Promise<Result<readonly string[]>>;
   confirmNewPassword(cookie: string, newPassword: NewPassword): Promise<Result<readonly string[]>>;
+  signup(registration: Registration): Promise<Result<string[]>>;
 }

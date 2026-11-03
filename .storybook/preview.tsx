@@ -14,6 +14,7 @@ sb.mock(import('../src/presentation/api/encryptionMethods.ts'));
 sb.mock(import('../src/presentation/api/login.ts'));
 sb.mock(import('../src/presentation/api/passwordRecovery.ts'));
 sb.mock(import('../src/presentation/api/roles.ts'));
+sb.mock(import('../src/presentation/api/signup.ts'));
 
 const preview: Preview = {
   beforeEach() {
