@@ -18,6 +18,7 @@ find_package(Drogon CONFIG REQUIRED)
 add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
+    src/http/error_response.cpp
     src/repositories/database.cpp
 )
 
@@ -39,5 +40,27 @@ else()
         -Wall
         -Wextra
         -Wpedantic
+    )
+endif()
+
+include(CTest)
+
+if(BUILD_TESTING)
+    add_executable(auth_error_response_test
+        tests/error_response_test.cpp
+        src/http/error_response.cpp
+    )
+
+    target_include_directories(auth_error_response_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(auth_error_response_test PRIVATE
+        Drogon::Drogon
+    )
+
+    add_test(
+        NAME auth_error_response
+        COMMAND auth_error_response_test
     )
 endif()
