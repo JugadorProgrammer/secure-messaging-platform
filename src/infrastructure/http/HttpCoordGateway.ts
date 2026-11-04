@@ -1,3 +1,5 @@
+import {z} from 'zod';
+
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {Role} from '@/domain/role';
 
@@ -5,8 +7,8 @@ import type {ICoordGateway} from '@/application/ICoordGateway';
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
-import {mapEncryptionMethodList} from './mapEncryptionMethodList';
-import {mapRoleList} from './mapRoleList';
+import {encryptionMethodSchema} from './encryptionMethodSchema';
+import {roleSchema} from './roleSchema';
 
 type HttpCoordGatewayDependencies = {
   coordUrl: string;
@@ -26,8 +28,9 @@ export class HttpCoordGateway implements ICoordGateway {
     try {
       const response = await fetch(`${this.coordUrl}${ROLES_PATH}`);
 
-      return await castResponse(response, mapRoleList);
-    } catch {
+      return await castResponse(response, z.array(roleSchema));
+    } catch (error) {
+      console.error(error);
       return Result.error(new Error('Ответ не получен'));
     }
   }
@@ -36,8 +39,9 @@ export class HttpCoordGateway implements ICoordGateway {
     try {
       const response = await fetch(`${this.coordUrl}${ENABLED_ENCRYPTION_METHODS_PATH}`);
 
-      return await castResponse(response, mapEncryptionMethodList);
-    } catch {
+      return await castResponse(response, z.array(encryptionMethodSchema));
+    } catch (error) {
+      console.error(error);
       return Result.error(new Error('Ответ не получен'));
     }
   }

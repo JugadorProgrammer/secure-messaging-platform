@@ -6,12 +6,12 @@ import {RoleList} from './RoleList';
 
 const roles: Role[] = [
   {
-    id: '1',
+    id: 1,
     name: 'Пользователь',
     description: 'Участник переписки',
   },
   {
-    id: '2',
+    id: 2,
     name: 'Администратор',
     description: 'Управляет ролями',
   },

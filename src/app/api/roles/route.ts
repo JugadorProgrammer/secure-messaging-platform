@@ -5,11 +5,13 @@ export async function GET(): Promise<Response> {
     const result = await appConfig.resolve('roleService').getRoles();
 
     if (!result.isSuccess) {
+      console.error(result.error);
       return new Response(null, {status: 503});
     }
 
     return Response.json(result.success);
-  } catch {
+  } catch (error) {
+    console.error(error);
     return new Response(null, {status: 503});
   }
 }

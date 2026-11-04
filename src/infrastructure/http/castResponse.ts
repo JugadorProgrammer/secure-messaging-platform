@@ -1,20 +1,18 @@
+import type {ZodType} from 'zod';
+
 import {Result} from '@/application/Result';
 
-export async function castResponse<T>(
-  response: Response,
-  map: (body: unknown) => Result<T>,
-): Promise<Result<T>> {
+export async function castResponse<T>(response: Response, schema: ZodType<T>): Promise<Result<T>> {
   if (!response.ok) {
-    return Result.error(new Error(`Ответ со статусом ${response.status}`));
+    const error = new Error(`Ответ со статусом ${response.status}`);
+    console.error(error);
+    return Result.error(error);
   }
-
-  let body: unknown;
 
   try {
-    body = await response.json();
-  } catch {
-    return Result.error(new Error('Ответ не получен'));
+    return Result.success(schema.parse(await response.json()));
+  } catch (error) {
+    console.error(error);
+    return Result.error(error instanceof Error ? error : new Error('Ответ не получен'));
   }
-
-  return map(body);
 }
