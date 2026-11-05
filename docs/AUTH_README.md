@@ -244,3 +244,25 @@ ctest --test-dir build --output-on-failure
 Тест `auth_error_response` проверяет структуру JSON, значения `code` и `message`, а также установленный HTTP-статус.
 
 Текущая реализация предоставляет общий механизм формирования прикладных ошибок. Подключение этого механизма к маршрутам регистрации, аутентификации и управления пользователями выполняется при реализации соответствующих контроллеров.
+
+## AUTH-5. Хранение пользователей и ролей
+
+Схема `db/001_users.sql` создаёт таблицу `users` с UUID, логином, email,
+хэшем пароля и ролью (`user` или `admin`). Логин и email уникальны без
+учёта регистра. Роль по умолчанию — `user`.
+
+C++-модель находится в `include/auth/models/user.h`. Реализация регистрации
+и запросов к таблице из C++ относится к следующим задачам.
+
+При первом создании тома PostgreSQL схема запускается автоматически.
+Для уже существующего тома её можно применить вручную:
+
+```bash
+docker compose exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -f /docker-entrypoint-initdb.d/001_users.sql'
+```
+
+SQL-проверка ограничений без сохранения тестовых записей:
+
+```bash
+docker compose exec -T postgres sh -c 'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' < tests/users_schema.sql
+```
