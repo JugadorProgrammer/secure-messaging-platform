@@ -20,6 +20,7 @@ add_executable(smp_auth
     src/http/health_controller.cpp
     src/http/error_response.cpp
     src/repositories/database.cpp
+    src/password/stub_password_hasher.cpp
 )
 
 # Путь для поиска собственных заголовочных файлов
@@ -62,5 +63,19 @@ if(BUILD_TESTING)
     add_test(
         NAME auth_error_response
         COMMAND auth_error_response_test
+    )
+
+    add_executable(auth_password_hasher_test
+        tests/password_hasher_test.cpp
+        src/password/stub_password_hasher.cpp
+    )
+
+    target_include_directories(auth_password_hasher_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(
+        NAME auth_password_hasher
+        COMMAND auth_password_hasher_test
     )
 endif()
