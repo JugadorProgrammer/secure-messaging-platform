@@ -15,6 +15,7 @@ services:
 
     volumes:
       - postgres_data:/var/lib/postgresql/data
+      - ./db/001_identity.sql:/docker-entrypoint-initdb.d/001_identity.sql:ro
 
     healthcheck:
       test:
