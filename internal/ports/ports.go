@@ -113,3 +113,23 @@ type Store interface {
 	// LogOp: userID == nil — анонимный субъект (NULL в БД), не 0.
 	LogOp(ctx context.Context, userID *int64, op, ref string, ok bool) error
 }
+
+// CryptoClient — операции Крипто-модуля (contracts.md, раздел 14).
+//
+// Бинарные данные передаются как есть, кодирование в base64/hex/PEM — забота
+// реализации. Ошибки: ErrCryptoBadInput — модуль отверг входные данные,
+// ErrCryptoUnavailable — модуль недоступен или ответил не по контракту.
+// Отмена контекста возвращается как context.Canceled.
+type CryptoClient interface {
+	KuzKeys(ctx context.Context) (keyHex, ivHex string, err error)
+	KuzEncrypt(ctx context.Context, keyHex, ivHex string, data []byte) (ct []byte, ms int64, err error)
+	KuzDecrypt(ctx context.Context, keyHex, ivHex string, ct []byte) (data []byte, ms int64, err error)
+	RSAKeys(ctx context.Context, bits int) (pub, priv string, ms int64, err error)
+	RSAEncrypt(ctx context.Context, pubPEM string, data []byte) (ct []byte, ms int64, err error)
+	RSADecrypt(ctx context.Context, privPEM string, ct []byte) (data []byte, ms int64, err error)
+	Streebog512(ctx context.Context, data []byte) ([]byte, error)
+	// SignHash и VerifyHash принимают готовый хеш Стрибог-512 (64 байта).
+	// Крипто-модуль не хеширует его повторно, иначе подпись не сойдётся с проверкой.
+	SignHash(ctx context.Context, privPEM string, hash []byte) ([]byte, error)
+	VerifyHash(ctx context.Context, pubPEM string, hash, sig []byte) (bool, error)
+}
