@@ -26,8 +26,13 @@ import (
 const (
 	testPubPEM  = "-----BEGIN RSA PUBLIC KEY-----\nUFVCLUZJWFRVUkU=\n-----END RSA PUBLIC KEY-----\n"
 	testPrivPEM = "-----BEGIN RSA PRIVATE KEY-----\nUFJJVi1GSVhUVVJF\n-----END RSA PRIVATE KEY-----\n"
-	testKeyHex  = "abababababababababababababababababababababababababababababababab"
-	testIVHex   = "00112233445566778899aabbccddeeff"
+	// JSON-строки тех же PEM: вручную, чтобы ожидание в тесте не зависело
+	// от того же encoding/json, которым кодирует клиент.
+	testPubPEMJSON  = `"-----BEGIN RSA PUBLIC KEY-----\nUFVCLUZJWFRVUkU=\n-----END RSA PUBLIC KEY-----\n"`
+	testPrivPEMJSON = `"-----BEGIN RSA PRIVATE KEY-----\nUFJJVi1GSVhUVVJF\n-----END RSA PRIVATE KEY-----\n"`
+
+	testKeyHex = "abababababababababababababababababababababababababababababababab"
+	testIVHex  = "00112233445566778899aabbccddeeff"
 
 	testText    = "привет"
 	testTextB64 = "0L/RgNC40LLQtdGC"
@@ -105,6 +110,8 @@ func TestClientEndpoints(t *testing.T) {
 			wantReq:  `{}`,
 			response: `{"key_hex":"` + testKeyHex + `","iv_hex":"` + testIVHex + `"}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				key, iv, err := c.KuzKeys(t.Context())
 				if err != nil {
 					t.Fatalf("KuzKeys() error = %v", err)
@@ -120,6 +127,8 @@ func TestClientEndpoints(t *testing.T) {
 			wantReq:  `{"key_hex":"` + testKeyHex + `","iv_hex":"` + testIVHex + `","data":"` + testTextB64 + `"}`,
 			response: `{"ciphertext":"` + testCTB64 + `","duration_ms":7}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				ct, ms, err := c.KuzEncrypt(t.Context(), testKeyHex, testIVHex, []byte(testText))
 				if err != nil {
 					t.Fatalf("KuzEncrypt() error = %v", err)
@@ -135,6 +144,8 @@ func TestClientEndpoints(t *testing.T) {
 			wantReq:  `{"key_hex":"` + testKeyHex + `","iv_hex":"` + testIVHex + `","ciphertext":"` + testCTB64 + `"}`,
 			response: `{"data":"` + testTextB64 + `","duration_ms":3}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				data, ms, err := c.KuzDecrypt(t.Context(), testKeyHex, testIVHex, []byte(testCT))
 				if err != nil {
 					t.Fatalf("KuzDecrypt() error = %v", err)
@@ -148,9 +159,11 @@ func TestClientEndpoints(t *testing.T) {
 			name:    "ключи rsa",
 			path:    pathRSAKeys,
 			wantReq: `{"bits":2048}`,
-			response: `{"public_key_pem":` + jsonString(testPubPEM) + `,"private_key_pem":` + jsonString(testPrivPEM) +
+			response: `{"public_key_pem":` + testPubPEMJSON + `,"private_key_pem":` + testPrivPEMJSON +
 				`,"duration_ms":1500}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				pub, priv, ms, err := c.RSAKeys(t.Context(), 2048)
 				if err != nil {
 					t.Fatalf("RSAKeys() error = %v", err)
@@ -163,9 +176,11 @@ func TestClientEndpoints(t *testing.T) {
 		{
 			name:     "шифрование rsa",
 			path:     pathRSAEncrypt,
-			wantReq:  `{"public_key_pem":` + jsonString(testPubPEM) + `,"data":"` + testTextB64 + `"}`,
+			wantReq:  `{"public_key_pem":` + testPubPEMJSON + `,"data":"` + testTextB64 + `"}`,
 			response: `{"ciphertext":"` + testCTB64 + `","duration_ms":11}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				ct, ms, err := c.RSAEncrypt(t.Context(), testPubPEM, []byte(testText))
 				if err != nil {
 					t.Fatalf("RSAEncrypt() error = %v", err)
@@ -178,9 +193,11 @@ func TestClientEndpoints(t *testing.T) {
 		{
 			name:     "расшифрование rsa",
 			path:     pathRSADecrypt,
-			wantReq:  `{"private_key_pem":` + jsonString(testPrivPEM) + `,"ciphertext":"` + testCTB64 + `"}`,
+			wantReq:  `{"private_key_pem":` + testPrivPEMJSON + `,"ciphertext":"` + testCTB64 + `"}`,
 			response: `{"data":"` + testTextB64 + `","duration_ms":42}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				data, ms, err := c.RSADecrypt(t.Context(), testPrivPEM, []byte(testCT))
 				if err != nil {
 					t.Fatalf("RSADecrypt() error = %v", err)
@@ -196,6 +213,8 @@ func TestClientEndpoints(t *testing.T) {
 			wantReq:  `{"data":"` + testTextB64 + `"}`,
 			response: `{"hash_hex":"` + testHashHex() + `"}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				hash, err := c.Streebog512(t.Context(), []byte(testText))
 				if err != nil {
 					t.Fatalf("Streebog512() error = %v", err)
@@ -208,9 +227,11 @@ func TestClientEndpoints(t *testing.T) {
 		{
 			name:     "подпись хеша",
 			path:     pathSignHash,
-			wantReq:  `{"private_key_pem":` + jsonString(testPrivPEM) + `,"hash_hex":"` + testHashHex() + `","hash_alg":"streebog512"}`,
+			wantReq:  `{"private_key_pem":` + testPrivPEMJSON + `,"hash_hex":"` + testHashHex() + `","hash_alg":"streebog512"}`,
 			response: `{"signature":"` + testSigB64 + `"}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				sig, err := c.SignHash(t.Context(), testPrivPEM, testHash)
 				if err != nil {
 					t.Fatalf("SignHash() error = %v", err)
@@ -223,10 +244,12 @@ func TestClientEndpoints(t *testing.T) {
 		{
 			name: "проверка подписи хеша",
 			path: pathVerifyHash,
-			wantReq: `{"public_key_pem":` + jsonString(testPubPEM) + `,"hash_hex":"` + testHashHex() +
+			wantReq: `{"public_key_pem":` + testPubPEMJSON + `,"hash_hex":"` + testHashHex() +
 				`","hash_alg":"streebog512","signature":"` + testSigB64 + `"}`,
 			response: `{"valid":true}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				ok, err := c.VerifyHash(t.Context(), testPubPEM, testHash, []byte{9, 9, 9})
 				if err != nil {
 					t.Fatalf("VerifyHash() error = %v", err)
@@ -239,10 +262,12 @@ func TestClientEndpoints(t *testing.T) {
 		{
 			name: "неверная подпись не ошибка",
 			path: pathVerifyHash,
-			wantReq: `{"public_key_pem":` + jsonString(testPubPEM) + `,"hash_hex":"` + testHashHex() +
+			wantReq: `{"public_key_pem":` + testPubPEMJSON + `,"hash_hex":"` + testHashHex() +
 				`","hash_alg":"streebog512","signature":"` + testSigB64 + `"}`,
 			response: `{"valid":false}`,
 			call: func(t *testing.T, c *Client) {
+				t.Helper()
+
 				ok, err := c.VerifyHash(t.Context(), testPubPEM, testHash, []byte{9, 9, 9})
 				if err != nil {
 					t.Fatalf("VerifyHash() error = %v", err)
@@ -281,12 +306,6 @@ func TestClientEndpoints(t *testing.T) {
 			tt.call(t, c)
 		})
 	}
-}
-
-func jsonString(s string) string {
-	b, _ := json.Marshal(s)
-
-	return string(b)
 }
 
 // allCalls вызывает каждый из девяти эндпоинтов с корректными аргументами.
@@ -499,12 +518,12 @@ func TestClientBadResponses(t *testing.T) {
 		},
 		{
 			name:     "открытый ключ не pem",
-			response: `{"public_key_pem":"not pem","private_key_pem":` + jsonString(testPrivPEM) + `}`,
+			response: `{"public_key_pem":"not pem","private_key_pem":` + testPrivPEMJSON + `}`,
 			call:     allCalls[3].call,
 		},
 		{
 			name:     "закрытый ключ не pem",
-			response: `{"public_key_pem":` + jsonString(testPubPEM) + `,"private_key_pem":""}`,
+			response: `{"public_key_pem":` + testPubPEMJSON + `,"private_key_pem":""}`,
 			call:     allCalls[3].call,
 		},
 		{
@@ -616,7 +635,7 @@ func TestRSAKeysTimeouts(t *testing.T) {
 					return
 				}
 				writeJSON(w, http.StatusOK,
-					`{"public_key_pem":`+jsonString(testPubPEM)+`,"private_key_pem":`+jsonString(testPrivPEM)+`,"duration_ms":1}`)
+					`{"public_key_pem":`+testPubPEMJSON+`,"private_key_pem":`+testPrivPEMJSON+`,"duration_ms":1}`)
 			})
 
 			c, _ := newTestClient(t, h, tt.timeout, tt.keygenTimeout)
@@ -724,7 +743,7 @@ func TestSecretsNotLogged(t *testing.T) {
 			writeJSON(w, http.StatusOK, `{"key_hex":"`+testKeyHex+`","iv_hex":"`+testIVHex+`"}`)
 		case pathRSAKeys:
 			writeJSON(w, http.StatusOK,
-				`{"public_key_pem":`+jsonString(testPubPEM)+`,"private_key_pem":`+jsonString(testPrivPEM)+`,"duration_ms":1}`)
+				`{"public_key_pem":`+testPubPEMJSON+`,"private_key_pem":`+testPrivPEMJSON+`,"duration_ms":1}`)
 		case pathKuzEncrypt, pathRSAEncrypt:
 			writeJSON(w, http.StatusOK, `{"ciphertext":"`+testCTB64+`","duration_ms":1}`)
 		case pathKuzDecrypt, pathRSADecrypt:

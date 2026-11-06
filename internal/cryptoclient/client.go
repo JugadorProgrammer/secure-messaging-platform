@@ -333,13 +333,13 @@ func (c *Client) VerifyHash(ctx context.Context, pubPEM string, hash, sig []byte
 	return *resp.Valid, nil
 }
 
-func (c *Client) ciphertextCall(ctx context.Context, path string, req any) ([]byte, int64, error) {
+func (c *Client) ciphertextCall(ctx context.Context, path string, req any) (ct []byte, ms int64, err error) {
 	var resp ciphertextResponse
 	if err := c.do(ctx, c.http, path, req, &resp); err != nil {
 		return nil, 0, err
 	}
 
-	ct, err := decodeB64(path, "ciphertext", resp.Ciphertext)
+	ct, err = decodeB64(path, "ciphertext", resp.Ciphertext)
 	if err != nil {
 		return nil, 0, err
 	}
@@ -347,13 +347,13 @@ func (c *Client) ciphertextCall(ctx context.Context, path string, req any) ([]by
 	return ct, resp.DurationMs, nil
 }
 
-func (c *Client) dataCall(ctx context.Context, path string, req any) ([]byte, int64, error) {
+func (c *Client) dataCall(ctx context.Context, path string, req any) (data []byte, ms int64, err error) {
 	var resp dataResponse
 	if err := c.do(ctx, c.http, path, req, &resp); err != nil {
 		return nil, 0, err
 	}
 
-	data, err := decodeB64(path, "data", resp.Data)
+	data, err = decodeB64(path, "data", resp.Data)
 	if err != nil {
 		return nil, 0, err
 	}
