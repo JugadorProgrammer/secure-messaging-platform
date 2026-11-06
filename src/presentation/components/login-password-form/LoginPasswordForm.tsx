@@ -1,28 +1,28 @@
 'use client';
 
-import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 import Link from 'next/link';
 
-import {login as sendLogin} from '@/presentation/api/login';
 import {Notification} from '@/presentation/components/notification/Notification';
 
-import styles from './LoginPasswordForm.module.css';
+import {useLoginPasswordForm} from './useLoginPasswordForm';
 
-type LoginFailure = {
-  notificationDate: number;
-  message: string;
-};
+import styles from './LoginPasswordForm.module.css';
 
 type LoginPasswordFormProps = {
   onSuccess: () => void;
 };
 
 export function LoginPasswordForm({onSuccess}: LoginPasswordFormProps) {
-  const [login, setLogin] = useState('');
-  const [password, setPassword] = useState('');
-  const [failure, setFailure] = useState<LoginFailure | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    login,
+    setLogin,
+    password,
+    setPassword,
+    isSubmitting,
+    notice,
+    submit,
+  } = useLoginPasswordForm({onSuccess});
 
   function handleLoginChange(event: ChangeEvent<HTMLInputElement>): void {
     setLogin(event.target.value);
@@ -34,23 +34,7 @@ export function LoginPasswordForm({onSuccess}: LoginPasswordFormProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setIsSubmitting(true);
-    setFailure(null);
-
-    const result = await sendLogin({login, password});
-
-    setPassword('');
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
-      return;
-    }
-
-    onSuccess();
+    await submit();
   }
 
   return (
@@ -84,8 +68,8 @@ export function LoginPasswordForm({onSuccess}: LoginPasswordFormProps) {
       <Link className={styles['login-password-form__link']} href="/recovery">
         Восстановление пароля
       </Link>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
+      {notice !== null ? (
+        <Notification key={notice.notificationDate} message={notice.message} />
       ) : null}
     </form>
   );

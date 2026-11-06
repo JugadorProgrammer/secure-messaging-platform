@@ -3,15 +3,13 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
+import {Result} from '@/application/Result';
+
 import {restorePassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
+import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
 
 import styles from './RestorePasswordForm.module.css';
-
-type RecoveryFailure = {
-  notificationDate: number;
-  message: string;
-};
 
 type RestorePasswordFormProps = {
   onSuccess: (email: string) => void;
@@ -19,7 +17,7 @@ type RestorePasswordFormProps = {
 
 export function RestorePasswordForm({onSuccess}: RestorePasswordFormProps) {
   const [email, setEmail] = useState('');
-  const [failure, setFailure] = useState<RecoveryFailure | null>(null);
+  const {notice, show, dismiss} = useScreenNotice();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleEmailChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -29,17 +27,14 @@ export function RestorePasswordForm({onSuccess}: RestorePasswordFormProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setIsSubmitting(true);
-    setFailure(null);
+    dismiss();
 
     const result = await restorePassword(email);
 
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
+      show(Result.message(result));
       return;
     }
 
@@ -63,8 +58,8 @@ export function RestorePasswordForm({onSuccess}: RestorePasswordFormProps) {
       <button className={styles['restore-password-form__button']} type="submit" disabled={isSubmitting}>
         Отправить
       </button>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
+      {notice !== null ? (
+        <Notification key={notice.notificationDate} message={notice.message} />
       ) : null}
     </form>
   );

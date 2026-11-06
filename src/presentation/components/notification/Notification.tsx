@@ -17,16 +17,16 @@ export function Notification({message}: NotificationProps) {
   const [isGone, setIsGone] = useState(false);
 
   useEffect(() => {
-    const leaveTimer = setTimeout(() => {
+    const leaveTimer = window.setTimeout(() => {
       setIsLeaving(true);
     }, VISIBLE_MS);
-    const hideTimer = setTimeout(() => {
+    const hideTimer = window.setTimeout(() => {
       setIsGone(true);
     }, VISIBLE_MS + LEAVE_MS);
 
     return () => {
-      clearTimeout(leaveTimer);
-      clearTimeout(hideTimer);
+      window.clearTimeout(leaveTimer);
+      window.clearTimeout(hideTimer);
     };
   }, []);
 

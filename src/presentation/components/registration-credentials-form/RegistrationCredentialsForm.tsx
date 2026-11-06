@@ -3,16 +3,14 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
+import {Result} from '@/application/Result';
+
 import {emailPattern, loginPattern, passwordPattern} from '@/infrastructure/http/signupSchema';
 import {signup} from '@/presentation/api/signup';
 import {Notification} from '@/presentation/components/notification/Notification';
+import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
 
 import styles from './RegistrationCredentialsForm.module.css';
-
-type RegistrationFailure = {
-  notificationDate: number;
-  message: string;
-};
 
 type RegistrationCredentialsFormProps = {
   onSuccess: (codes: string[]) => void;
@@ -23,7 +21,7 @@ export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentials
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const [failure, setFailure] = useState<RegistrationFailure | null>(null);
+  const {notice, show, dismiss} = useScreenNotice();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleLoginChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -62,21 +60,24 @@ export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentials
     return null;
   }
 
+  function showValidationFailure(): void {
+    const error = validateForm();
+
+    if (error !== null) {
+      show(error);
+    }
+  }
+
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
+    showValidationFailure();
 
-    const errors = validateForm();
-
-    if (errors !== null) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: errors,
-      });
+    if (validateForm() !== null) {
       return;
     }
 
     setIsSubmitting(true);
-    setFailure(null);
+    dismiss();
 
     const result = await signup({login, email, password});
 
@@ -85,10 +86,7 @@ export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentials
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
+      show(Result.message(result));
       return;
     }
 
@@ -153,8 +151,8 @@ export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentials
       <button className={styles['registration-credentials-form__submit']} type="submit" disabled={isSubmitting}>
         Зарегистрироваться
       </button>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
+      {notice !== null ? (
+        <Notification key={notice.notificationDate} message={notice.message} />
       ) : null}
     </form>
   );
