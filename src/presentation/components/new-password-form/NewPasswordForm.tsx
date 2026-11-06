@@ -3,15 +3,13 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
+import {Result} from '@/application/Result';
+
 import {confirmNewPassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
+import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
 
 import styles from './NewPasswordForm.module.css';
-
-type RecoveryFailure = {
-  notificationDate: number;
-  message: string;
-};
 
 type NewPasswordFormProps = {
   onSuccess: () => void;
@@ -19,7 +17,7 @@ type NewPasswordFormProps = {
 
 export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
   const [password, setPassword] = useState('');
-  const [failure, setFailure] = useState<RecoveryFailure | null>(null);
+  const {notice, show, dismiss} = useScreenNotice();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handlePasswordChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -29,7 +27,7 @@ export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setIsSubmitting(true);
-    setFailure(null);
+    dismiss();
 
     const result = await confirmNewPassword(password);
 
@@ -37,10 +35,7 @@ export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
+      show(Result.message(result));
       return;
     }
 
@@ -64,8 +59,8 @@ export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
       <button className={styles['new-password-form__submit']} type="submit" disabled={isSubmitting}>
         Сохранить
       </button>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
+      {notice !== null ? (
+        <Notification key={notice.notificationDate} message={notice.message} />
       ) : null}
     </form>
   );

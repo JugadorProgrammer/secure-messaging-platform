@@ -1,25 +1,29 @@
-export type Result<T> =
+export type Result<T, E = Error> =
   | {
       isSuccess: true;
       success: T;
     }
   | {
       isSuccess: false;
-      error: Error;
+      error: E;
     };
 
 export const Result = {
-  success<T>(value: T): Result<T> {
+  success<T>(value: T): Result<T, never> {
     return {
       isSuccess: true,
       success: value,
     };
   },
 
-  error(error: Error): Result<never> {
+  error<E>(error: E): Result<never, E> {
     return {
       isSuccess: false,
       error,
     };
+  },
+
+  message(result: {error: Error}): string {
+    return result.error.message;
   },
 };

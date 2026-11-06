@@ -1,19 +1,12 @@
 'use client';
 
-import {useEffect, useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-import {confirmRestoreCode, restorePassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
 
+import {usePasswordRecoveryCodeForm} from './usePasswordRecoveryCodeForm';
+
 import styles from './PasswordRecoveryCodeForm.module.css';
-
-const RESEND_DELAY_SECONDS = 60;
-
-type RecoveryFailure = {
-  notificationDate: number;
-  message: string;
-};
 
 type PasswordRecoveryCodeFormProps = {
   email: string;
@@ -21,72 +14,29 @@ type PasswordRecoveryCodeFormProps = {
 };
 
 export function PasswordRecoveryCodeForm({email, onSuccess}: PasswordRecoveryCodeFormProps) {
-  const [confirmationCode, setConfirmationCode] = useState('');
-  const [failure, setFailure] = useState<RecoveryFailure | null>(null);
-  const [isSending, setIsSending] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [resendDelaySeconds, setResendDelaySeconds] = useState(RESEND_DELAY_SECONDS);
-
-  useEffect(() => {
-    if (resendDelaySeconds === 0) {
-      return;
-    }
-
-    const timerId = window.setTimeout(() => {
-      setResendDelaySeconds((seconds) => seconds - 1);
-    }, 1000);
-
-    return () => {
-      window.clearTimeout(timerId);
-    };
-  }, [resendDelaySeconds]);
+  const {
+    confirmationCode,
+    setConfirmationCode,
+    isSubmitting,
+    notice,
+    isResendDisabled,
+    resendButtonLabel,
+    submit,
+    resend,
+  } = usePasswordRecoveryCodeForm({email, onSuccess});
 
   function handleConfirmationCodeChange(event: ChangeEvent<HTMLInputElement>): void {
     setConfirmationCode(event.target.value.replace(/\D/g, '').slice(0, 6));
   }
 
-  async function handleResend(): Promise<void> {
-    setIsSending(true);
-    setFailure(null);
-
-    const result = await restorePassword(email);
-
-    setIsSending(false);
-
-    if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
-      return;
-    }
-
-    setResendDelaySeconds(RESEND_DELAY_SECONDS);
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setIsSubmitting(true);
-    setFailure(null);
-
-    const result = await confirmRestoreCode(confirmationCode);
-
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
-      return;
-    }
-
-    onSuccess();
+    await submit();
   }
 
-  const resendButtonLabel = resendDelaySeconds > 0
-    ? `Отправить код ещё раз через ${resendDelaySeconds} с`
-    : 'Отправить код ещё раз';
+  async function handleResend(): Promise<void> {
+    await resend();
+  }
 
   return (
     <form className={styles['password-recovery-code-form']} onSubmit={handleSubmit}>
@@ -112,13 +62,13 @@ export function PasswordRecoveryCodeForm({email, onSuccess}: PasswordRecoveryCod
       <button
         className={styles['password-recovery-code-form__button']}
         type="button"
-        disabled={isSending || resendDelaySeconds > 0}
+        disabled={isResendDisabled}
         onClick={handleResend}
       >
         {resendButtonLabel}
       </button>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
+      {notice !== null ? (
+        <Notification key={notice.notificationDate} message={notice.message} />
       ) : null}
     </form>
   );

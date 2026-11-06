@@ -3,15 +3,13 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
+import {Result} from '@/application/Result';
+
 import {confirmDisposableCode} from '@/presentation/api/login';
 import {Notification} from '@/presentation/components/notification/Notification';
+import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
 
 import styles from './LoginDisposableCodeForm.module.css';
-
-type LoginFailure = {
-  notificationDate: number;
-  message: string;
-};
 
 type LoginDisposableCodeFormProps = {
   onSuccess: () => void;
@@ -19,7 +17,7 @@ type LoginDisposableCodeFormProps = {
 
 export function LoginDisposableCodeForm({onSuccess}: LoginDisposableCodeFormProps) {
   const [disposableCode, setDisposableCode] = useState('');
-  const [failure, setFailure] = useState<LoginFailure | null>(null);
+  const {notice, show, dismiss} = useScreenNotice();
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   function handleDisposableCodeChange(event: ChangeEvent<HTMLInputElement>): void {
@@ -29,17 +27,14 @@ export function LoginDisposableCodeForm({onSuccess}: LoginDisposableCodeFormProp
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
     setIsSubmitting(true);
-    setFailure(null);
+    dismiss();
 
     const result = await confirmDisposableCode(disposableCode);
 
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      setFailure({
-        notificationDate: Date.now(),
-        message: result.error.message,
-      });
+      show(Result.message(result));
       return;
     }
 
@@ -63,8 +58,8 @@ export function LoginDisposableCodeForm({onSuccess}: LoginDisposableCodeFormProp
       <button className={styles['login-disposable-code-form__submit']} type="submit" disabled={isSubmitting}>
         Подтвердить
       </button>
-      {failure !== null ? (
-        <Notification key={failure.notificationDate} message={failure.message} />
+      {notice !== null ? (
+        <Notification key={notice.notificationDate} message={notice.message} />
       ) : null}
     </form>
   );

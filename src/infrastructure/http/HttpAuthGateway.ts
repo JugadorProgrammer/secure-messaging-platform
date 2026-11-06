@@ -2,6 +2,7 @@ import type {DisposableCode, EmailCode, IAuthGateway, LoginCredentials, NewPassw
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
+import {HttpRequestBuilder} from './HttpRequestBuilder';
 import {readSetCookies} from './setCookies';
 import {recoveryCodesSchema} from './recoveryCodesSchema';
 
@@ -25,90 +26,99 @@ export class HttpAuthGateway implements IAuthGateway {
   }
 
   login(credentials: LoginCredentials): Promise<Result<readonly string[]>> {
-    return requestSetCookies(() => fetch(`${this.authUrl}${LOGIN_PATH}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        login: credentials.login,
-        password: credentials.password,
-      }),
-    }));
+    return requestSetCookies(() =>
+      fetch(
+        `${this.authUrl}${LOGIN_PATH}`,
+        new HttpRequestBuilder()
+          .post()
+          .json({
+            login: credentials.login,
+            password: credentials.password,
+          })
+          .build(),
+      ),
+    );
   }
 
   confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>> {
-    return requestSetCookies(() => fetch(`${this.authUrl}${CONFIRM_EMAIL_CODE_PATH}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        cookie,
-      },
-      body: JSON.stringify({
-        code: emailCode.code,
-      }),
-    }));
+    return requestSetCookies(() =>
+      fetch(
+        `${this.authUrl}${CONFIRM_EMAIL_CODE_PATH}`,
+        new HttpRequestBuilder()
+          .post()
+          .cookie(cookie)
+          .json({
+            code: emailCode.code,
+          })
+          .build(),
+      ),
+    );
   }
 
   confirmDisposableCode(cookie: string, disposableCode: DisposableCode): Promise<Result<readonly string[]>> {
-    return requestSetCookies(() => fetch(`${this.authUrl}${CONFIRM_DISPOSABLE_CODE_PATH}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        cookie,
-      },
-      body: JSON.stringify({
-        code: disposableCode.code,
-      }),
-    }));
+    return requestSetCookies(() =>
+      fetch(
+        `${this.authUrl}${CONFIRM_DISPOSABLE_CODE_PATH}`,
+        new HttpRequestBuilder()
+          .post()
+          .cookie(cookie)
+          .json({
+            code: disposableCode.code,
+          })
+          .build(),
+      ),
+    );
   }
 
   restorePassword(restorePasswordRequest: RestorePasswordRequest): Promise<Result<void>> {
-    return requestOk(() => fetch(`${this.authUrl}${RESTORE_PASSWORD_PATH}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: restorePasswordRequest.email,
-      }),
-    }));
+    return requestOk(() =>
+      fetch(
+        `${this.authUrl}${RESTORE_PASSWORD_PATH}`,
+        new HttpRequestBuilder()
+          .post()
+          .json({
+            email: restorePasswordRequest.email,
+          })
+          .build(),
+      ),
+    );
   }
 
   confirmRestoreCode(restoreCode: RestoreCode): Promise<Result<readonly string[]>> {
-    return requestSetCookies(() => fetch(`${this.authUrl}${CONFIRM_RESTORE_CODE_PATH}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify({
-        code: restoreCode.code,
-      }),
-    }));
+    return requestSetCookies(() =>
+      fetch(
+        `${this.authUrl}${CONFIRM_RESTORE_CODE_PATH}`,
+        new HttpRequestBuilder()
+          .post()
+          .json({
+            code: restoreCode.code,
+          })
+          .build(),
+      ),
+    );
   }
 
   confirmNewPassword(cookie: string, newPassword: NewPassword): Promise<Result<readonly string[]>> {
-    return requestSetCookies(() => fetch(`${this.authUrl}${CONFIRM_NEW_PASSWORD_PATH}`, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-        cookie,
-      },
-      body: JSON.stringify({
-        password: newPassword.password,
-      }),
-    }));
+    return requestSetCookies(() =>
+      fetch(
+        `${this.authUrl}${CONFIRM_NEW_PASSWORD_PATH}`,
+        new HttpRequestBuilder()
+          .post()
+          .cookie(cookie)
+          .json({
+            password: newPassword.password,
+          })
+          .build(),
+      ),
+    );
   }
 
   async signup(registration: Registration): Promise<Result<string[]>> {
     try {
-      const response = await fetch(`${this.authUrl}${SIGNUP_PATH}`, {
-        method: 'POST',
-        headers: {
-          'content-type': 'application/json',
-        },
-        body: JSON.stringify(registration),
-      });
+      const response = await fetch(
+        `${this.authUrl}${SIGNUP_PATH}`,
+        new HttpRequestBuilder().post().json(registration).build(),
+      );
 
       return await castResponse(response, recoveryCodesSchema);
     } catch (error) {
