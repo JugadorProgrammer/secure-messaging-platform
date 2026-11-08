@@ -10,6 +10,7 @@ import '../src/app/globals.css';
 import {sampleEncryptionMethods} from './sampleEncryptionMethods';
 import {sampleRoles} from './sampleRoles';
 
+sb.mock(import('../src/presentation/api/decrypt.ts'));
 sb.mock(import('../src/presentation/api/encryptionMethods.ts'));
 sb.mock(import('../src/presentation/api/login.ts'));
 sb.mock(import('../src/presentation/api/passwordRecovery.ts'));

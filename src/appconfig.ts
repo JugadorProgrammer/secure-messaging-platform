@@ -2,6 +2,7 @@ import 'server-only';
 
 import {asClass, asFunction, createContainer, InjectionMode} from 'awilix';
 
+import {DecryptMessageService} from '@/application/DecryptMessageService';
 import {EncryptionMethodService} from '@/application/EncryptionMethodService';
 import {LoginService} from '@/application/LoginService';
 import {PasswordRecoveryService} from '@/application/PasswordRecoveryService';
@@ -19,6 +20,7 @@ export const appConfig = createContainer({
   authGateway: asClass(HttpAuthGateway).singleton(),
   roleService: asClass(RoleService).singleton(),
   encryptionMethodService: asClass(EncryptionMethodService).singleton(),
+  decryptMessageService: asClass(DecryptMessageService).singleton(),
   loginService: asClass(LoginService).singleton(),
   passwordRecoveryService: asClass(PasswordRecoveryService).singleton(),
   registrationService: asClass(RegistrationService).singleton(),
