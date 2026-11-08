@@ -1,9 +1,9 @@
 import {NextResponse} from 'next/server';
 
-import type {LoginCredentials} from '@/application/IAuthGateway';
+import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
 
 import {appConfig} from '@/appconfig';
-import {loginCredentialsSchema} from '@/infrastructure/http/loginCredentialsSchema';
+import {loginCredentialsSchema} from '@/infrastructure/http/LoginService/loginCredentialsSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';

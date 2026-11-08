@@ -1,7 +1,7 @@
-import type {RestorePasswordRequest} from '@/application/IAuthGateway';
+import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
 
 import {appConfig} from '@/appconfig';
-import {restorePasswordRequestSchema} from '@/infrastructure/http/restorePasswordRequestSchema';
+import {restorePasswordRequestSchema} from '@/infrastructure/http/PasswordRecoveryService/restorePasswordRequestSchema';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';

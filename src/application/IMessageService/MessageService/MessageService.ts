@@ -1,6 +1,6 @@
 import type {Message} from '@/domain/message';
 
-import type {ICoordGateway} from '@/application/ICoordGateway';
+import type {ICoordGateway} from '@/application/ICoordGateway/ICoordGateway';
 import type {IMessageService} from '@/application/IMessageService/IMessageService';
 import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 import type {DecryptMessageResult} from '@/application/IMessageService/MessageService/DecryptMessageResult';

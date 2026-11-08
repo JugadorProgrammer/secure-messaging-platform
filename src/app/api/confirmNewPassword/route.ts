@@ -1,11 +1,11 @@
 import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
-import type {NewPassword} from '@/application/IAuthGateway';
-import {RESTORE_PASSWORD_COOKIE} from '@/application/PasswordRecoveryService';
+import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
+import {RESTORE_PASSWORD_COOKIE} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/PasswordRecoveryService';
 
 import {appConfig} from '@/appconfig';
-import {newPasswordSchema} from '@/infrastructure/http/newPasswordSchema';
+import {newPasswordSchema} from '@/infrastructure/http/PasswordRecoveryService/newPasswordSchema';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';

@@ -1,4 +1,8 @@
-import type {IAuthGateway, NewPassword, RestoreCode, RestorePasswordRequest} from '@/application/IAuthGateway';
+import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
+import type {IPasswordRecoveryService} from '@/application/IPasswordRecoveryService/IPasswordRecoveryService';
+import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
+import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
 import type {Result} from '@/application/Result';
 
 export const RESTORE_PASSWORD_COOKIE = 'restorePassword';
@@ -7,7 +11,7 @@ type PasswordRecoveryServiceDependencies = {
   authGateway: IAuthGateway;
 };
 
-export class PasswordRecoveryService {
+export class PasswordRecoveryService implements IPasswordRecoveryService {
   private readonly authGateway: IAuthGateway;
 
   constructor({authGateway}: PasswordRecoveryServiceDependencies) {

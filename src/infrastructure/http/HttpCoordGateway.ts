@@ -4,7 +4,7 @@ import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {Message} from '@/domain/message';
 import type {Role} from '@/domain/role';
 
-import type {ICoordGateway} from '@/application/ICoordGateway';
+import type {ICoordGateway} from '@/application/ICoordGateway/ICoordGateway';
 import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 import type {DecryptMessageResult} from '@/application/IMessageService/MessageService/DecryptMessageResult';
 import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
@@ -13,10 +13,10 @@ import type {SignedPdfDocument} from '@/application/IMessageService/MessageServi
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
-import {encryptionMethodSchema} from './encryptionMethodSchema';
+import {encryptionMethodSchema} from './EncryptionMethodService/encryptionMethodSchema';
 import {HttpRequestBuilder} from './HttpRequestBuilder';
-import {decryptMessageResultSchema, messageSchema} from './messageSchema';
-import {roleSchema} from './roleSchema';
+import {decryptMessageResultSchema, messageSchema} from './MessageService/messageSchema';
+import {roleSchema} from './RoleService/roleSchema';
 
 type HttpCoordGatewayDependencies = {
   coordUrl: string;

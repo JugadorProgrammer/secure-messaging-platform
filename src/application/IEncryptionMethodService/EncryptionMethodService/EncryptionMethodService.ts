@@ -1,13 +1,14 @@
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
 
-import type {ICoordGateway} from '@/application/ICoordGateway';
+import type {ICoordGateway} from '@/application/ICoordGateway/ICoordGateway';
+import type {IEncryptionMethodService} from '@/application/IEncryptionMethodService/IEncryptionMethodService';
 import type {Result} from '@/application/Result';
 
 type EncryptionMethodServiceDependencies = {
   coordGateway: ICoordGateway;
 };
 
-export class EncryptionMethodService {
+export class EncryptionMethodService implements IEncryptionMethodService {
   private readonly coordGateway: ICoordGateway;
 
   constructor({coordGateway}: EncryptionMethodServiceDependencies) {

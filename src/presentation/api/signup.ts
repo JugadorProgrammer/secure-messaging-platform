@@ -1,7 +1,7 @@
-import type {Registration} from '@/application/IAuthGateway';
+import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
 import {Result} from '@/application/Result';
 
-import {recoveryCodesSchema} from '@/infrastructure/http/recoveryCodesSchema';
+import {recoveryCodesSchema} from '@/infrastructure/http/RegistrationService/recoveryCodesSchema';
 
 const SIGNUP_PATH = '/api/signup';
 

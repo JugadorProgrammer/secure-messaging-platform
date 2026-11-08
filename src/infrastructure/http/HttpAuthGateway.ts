@@ -1,10 +1,17 @@
-import type {DisposableCode, EmailCode, IAuthGateway, LoginCredentials, NewPassword, Registration, RestoreCode, RestorePasswordRequest} from '@/application/IAuthGateway';
+import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
+import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
+import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
+import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
+import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
+import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
+import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
 import {HttpRequestBuilder} from './HttpRequestBuilder';
 import {readSetCookies} from './setCookies';
-import {recoveryCodesSchema} from './recoveryCodesSchema';
+import {recoveryCodesSchema} from './RegistrationService/recoveryCodesSchema';
 
 type HttpAuthGatewayDependencies = {
   authUrl: string;

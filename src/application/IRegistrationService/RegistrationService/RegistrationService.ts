@@ -1,11 +1,13 @@
-import type {IAuthGateway, Registration} from '@/application/IAuthGateway';
+import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
+import type {IRegistrationService} from '@/application/IRegistrationService/IRegistrationService';
+import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
 import type {Result} from '@/application/Result';
 
 type RegistrationServiceDependencies = {
   authGateway: IAuthGateway;
 };
 
-export class RegistrationService {
+export class RegistrationService implements IRegistrationService {
   private readonly authGateway: IAuthGateway;
 
   constructor({authGateway}: RegistrationServiceDependencies) {

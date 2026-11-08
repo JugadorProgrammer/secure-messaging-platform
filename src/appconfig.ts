@@ -2,12 +2,12 @@ import 'server-only';
 
 import {asClass, asFunction, createContainer, InjectionMode} from 'awilix';
 
-import {EncryptionMethodService} from '@/application/EncryptionMethodService';
+import {EncryptionMethodService} from '@/application/IEncryptionMethodService/EncryptionMethodService/EncryptionMethodService';
+import {LoginService} from '@/application/ILoginService/LoginService/LoginService';
 import {MessageService} from '@/application/IMessageService/MessageService/MessageService';
-import {LoginService} from '@/application/LoginService';
-import {PasswordRecoveryService} from '@/application/PasswordRecoveryService';
-import {RegistrationService} from '@/application/RegistrationService';
-import {RoleService} from '@/application/RoleService';
+import {PasswordRecoveryService} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/PasswordRecoveryService';
+import {RegistrationService} from '@/application/IRegistrationService/RegistrationService/RegistrationService';
+import {RoleService} from '@/application/IRoleService/RoleService/RoleService';
 import {HttpAuthGateway} from '@/infrastructure/http/HttpAuthGateway';
 import {HttpCoordGateway} from '@/infrastructure/http/HttpCoordGateway';
 

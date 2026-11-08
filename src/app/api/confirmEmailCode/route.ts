@@ -1,10 +1,10 @@
 import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
-import type {EmailCode} from '@/application/IAuthGateway';
+import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
 
 import {appConfig} from '@/appconfig';
-import {emailCodeSchema} from '@/infrastructure/http/emailCodeSchema';
+import {emailCodeSchema} from '@/infrastructure/http/LoginService/emailCodeSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';

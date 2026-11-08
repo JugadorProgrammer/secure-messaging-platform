@@ -1,10 +1,10 @@
 import {NextResponse} from 'next/server';
 
-import type {RestoreCode} from '@/application/IAuthGateway';
-import {RESTORE_PASSWORD_COOKIE} from '@/application/PasswordRecoveryService';
+import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import {RESTORE_PASSWORD_COOKIE} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/PasswordRecoveryService';
 
 import {appConfig} from '@/appconfig';
-import {restoreCodeSchema} from '@/infrastructure/http/restoreCodeSchema';
+import {restoreCodeSchema} from '@/infrastructure/http/PasswordRecoveryService/restoreCodeSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';

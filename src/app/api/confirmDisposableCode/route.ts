@@ -1,10 +1,10 @@
 import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
-import type {DisposableCode} from '@/application/IAuthGateway';
+import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
 
 import {appConfig} from '@/appconfig';
-import {disposableCodeSchema} from '@/infrastructure/http/disposableCodeSchema';
+import {disposableCodeSchema} from '@/infrastructure/http/LoginService/disposableCodeSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';

@@ -1,7 +1,7 @@
-import type {Registration} from '@/application/IAuthGateway';
+import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
 
 import {appConfig} from '@/appconfig';
-import {signupSchema} from '@/infrastructure/http/signupSchema';
+import {signupSchema} from '@/infrastructure/http/RegistrationService/signupSchema';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';

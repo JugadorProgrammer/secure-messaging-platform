@@ -1,11 +1,15 @@
-import type {DisposableCode, EmailCode, IAuthGateway, LoginCredentials} from '@/application/IAuthGateway';
+import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
+import type {ILoginService} from '@/application/ILoginService/ILoginService';
+import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
+import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
+import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
 import type {Result} from '@/application/Result';
 
 type LoginServiceDependencies = {
   authGateway: IAuthGateway;
 };
 
-export class LoginService {
+export class LoginService implements ILoginService {
   private readonly authGateway: IAuthGateway;
 
   constructor({authGateway}: LoginServiceDependencies) {
@@ -20,7 +24,10 @@ export class LoginService {
     return this.authGateway.confirmEmailCode(cookie, emailCode);
   }
 
-  confirmDisposableCode(cookie: string, disposableCode: DisposableCode): Promise<Result<readonly string[]>> {
+  confirmDisposableCode(
+    cookie: string,
+    disposableCode: DisposableCode,
+  ): Promise<Result<readonly string[]>> {
     return this.authGateway.confirmDisposableCode(cookie, disposableCode);
   }
 }
