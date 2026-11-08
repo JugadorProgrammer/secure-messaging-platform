@@ -17,6 +17,7 @@ const kuznyechikKeysSchema = z.object({
 });
 
 const messageBaseSchema = z.object({
+  id: z.int().positive(),
   plaintext: nonEmptyString,
   ciphertext: nonEmptyString,
   timestamp: z.iso.datetime(),
@@ -58,4 +59,8 @@ export const decryptMessageRequestSchema = z.discriminatedUnion('method', [
 
 export const decryptMessageResultSchema = z.object({
   plaintext: nonEmptyString,
+});
+
+export const exportPdfWithSignatureRequestSchema = z.object({
+  id: z.int().positive(),
 });

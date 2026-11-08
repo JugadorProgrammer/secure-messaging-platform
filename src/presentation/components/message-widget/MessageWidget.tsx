@@ -18,7 +18,14 @@ function formatTimestamp(value: string): string {
 }
 
 export function MessageWidget({message}: MessageWidgetProps) {
-  const {canCheckFromCiphertext, isChecking, notice, checkFromCiphertext} = useMessageWidget(message);
+  const {
+    canCheckFromCiphertext,
+    isChecking,
+    isExportingPdf,
+    notice,
+    checkFromCiphertext,
+    exportPdf,
+  } = useMessageWidget(message);
 
   return (
     <article className={styles['message-widget']}>
@@ -29,12 +36,20 @@ export function MessageWidget({message}: MessageWidgetProps) {
         </div>
         <div className={styles['message-widget__actions']}>
           <button
-            className={styles['message-widget__check']}
+            className={styles['message-widget__action']}
             type="button"
             onClick={checkFromCiphertext}
             disabled={!canCheckFromCiphertext || isChecking}
           >
             Проверить из шифртекста
+          </button>
+          <button
+            className={styles['message-widget__action']}
+            type="button"
+            onClick={exportPdf}
+            disabled={isExportingPdf}
+          >
+            PDF + ЭЦП
           </button>
         </div>
       </header>

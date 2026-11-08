@@ -27,6 +27,7 @@ export const WithMessages: Story = {
     mocked(getAllMessages).mockResolvedValue(
       Result.success([
         {
+          id: 1,
           method: 'RSA-32768',
           plaintext: 'Секретное сообщение',
           ciphertext: 'ciphertext-rsa',
@@ -37,6 +38,7 @@ export const WithMessages: Story = {
           },
         },
         {
+          id: 2,
           method: 'Кузнечик',
           plaintext: 'Другое сообщение',
           ciphertext: 'ciphertext-kuznyechik',

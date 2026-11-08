@@ -13,6 +13,7 @@ export type KuznyechikKeys = {
 };
 
 type MessageBase = {
+  id: number;
   plaintext: string;
   ciphertext: string;
   timestamp: string;
@@ -48,4 +49,13 @@ export type DecryptMessageRequest = DecryptRsaRequest | DecryptKuznyechikRequest
 
 export type DecryptMessageResult = {
   plaintext: string;
+};
+
+export type ExportPdfWithSignatureRequest = {
+  id: number;
+};
+
+export type SignedPdfDocument = {
+  content: ArrayBuffer;
+  filename: string;
 };

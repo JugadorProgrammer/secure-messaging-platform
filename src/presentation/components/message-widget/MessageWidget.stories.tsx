@@ -5,6 +5,7 @@ import type {Message} from '@/domain/message';
 import {MessageWidget} from './MessageWidget';
 
 const rsaMessage: Message = {
+  id: 1,
   method: 'RSA-32768',
   plaintext: 'Секретное сообщение',
   ciphertext: 'ciphertext-rsa',
@@ -16,6 +17,7 @@ const rsaMessage: Message = {
 };
 
 const kuznyechikMessage: Message = {
+  id: 2,
   method: 'Кузнечик',
   plaintext: 'Другое сообщение',
   ciphertext: 'ciphertext-kuznyechik',
@@ -56,6 +58,7 @@ export const WithoutKeys: Story = {
   name: 'Без ключей',
   args: {
     message: {
+      id: 3,
       method: 'RSA-32768',
       plaintext: 'Без ключей',
       ciphertext: 'ciphertext-no-keys',

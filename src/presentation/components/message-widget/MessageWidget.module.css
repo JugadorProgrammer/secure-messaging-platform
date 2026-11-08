@@ -40,7 +40,7 @@
   gap: 0.5rem;
 }
 
-.message-widget__check {
+.message-widget__action {
   padding: 0.375rem 0.75rem;
   border: 0;
   border-radius: 0.375rem;
@@ -51,7 +51,7 @@
   background: var(--black-700);
 }
 
-.message-widget__check:disabled {
+.message-widget__action:disabled {
   background: var(--gray-600);
   cursor: default;
 }

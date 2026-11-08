@@ -33,7 +33,7 @@ export function MessageJournalWidget() {
           ) : (
             messages.map((message) => (
               <MessageWidget
-                key={`${message.method}-${message.timestamp}-${message.ciphertext}`}
+                key={message.id}
                 message={message}
               />
             ))
