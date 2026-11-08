@@ -7,8 +7,8 @@ export const messageEncryptionMethodSchema = z.enum(MESSAGE_ENCRYPTION_METHODS);
 const nonEmptyString = z.string().refine((value) => value.trim() !== '');
 
 export const encryptMessageRequestSchema = z.object({
-    plaintext: nonEmptyString,
-    method: messageEncryptionMethodSchema,
+  plaintext: nonEmptyString,
+  method: messageEncryptionMethodSchema,
 });
 
 const rsaKeysSchema = z.object({
@@ -29,13 +29,13 @@ const messageBaseSchema = z.object({
 });
 
 export const rsaMessageSchema = messageBaseSchema.extend({
-    method: z.literal('RSA-32768'),
-    keys: rsaKeysSchema,
+  method: z.literal('RSA-32768'),
+  keys: rsaKeysSchema,
 });
 
 export const kuznyechikMessageSchema = messageBaseSchema.extend({
-    method: z.literal('Кузнечик'),
-    keys: kuznyechikKeysSchema,
+  method: z.literal('Кузнечик'),
+  keys: kuznyechikKeysSchema,
 });
 
 export const messageSchema = z.discriminatedUnion('method', [

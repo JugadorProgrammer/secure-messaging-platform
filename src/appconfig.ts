@@ -26,7 +26,6 @@ export const appConfig = createContainer({
   encryptMessageService: asClass(EncryptMessageService).singleton(),
   decryptMessageService: asClass(DecryptMessageService).singleton(),
   messageService: asClass(MessageService).singleton(),
-  decryptMessageService: asClass(DecryptMessageService).singleton(),
   exportPdfWithSignatureService: asClass(ExportPdfWithSignatureService).singleton(),
   loginService: asClass(LoginService).singleton(),
   passwordRecoveryService: asClass(PasswordRecoveryService).singleton(),

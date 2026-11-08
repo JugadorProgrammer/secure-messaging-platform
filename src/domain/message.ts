@@ -2,26 +2,6 @@ export const MESSAGE_ENCRYPTION_METHODS = ['RSA-32768', 'Кузнечик'] as c
 
 export type MessageEncryptionMethod = (typeof MESSAGE_ENCRYPTION_METHODS)[number];
 
-type DecryptMessageRequestBase = {
-  ciphertext: string;
-};
-
-export type DecryptRsaRequest = DecryptMessageRequestBase & {
-  method: 'RSA-32768';
-  privateKey: string;
-};
-
-export type DecryptKuznyechikRequest = DecryptMessageRequestBase & {
-  method: 'Кузнечик';
-  key: string;
-};
-
-export type DecryptMessageRequest = DecryptRsaRequest | DecryptKuznyechikRequest;
-
-export type DecryptMessageResult = {
-  plaintext: string;
-};
-
 export type RsaKeys = {
   publicKey: string;
   privateKey: string;
@@ -41,46 +21,46 @@ type MessageBase = {
 
 export type RsaMessage = MessageBase & {
   method: 'RSA-32768';
-  keys?: RsaKeys;
+  keys: RsaKeys;
 };
 
 export type KuznyechikMessage = MessageBase & {
   method: 'Кузнечик';
-  keys?: KuznyechikKeys;
+  keys: KuznyechikKeys;
 };
 
 export type Message = RsaMessage | KuznyechikMessage;
 
 export type EncryptMessageRequest = {
-    plaintext: string;
-    method: MessageEncryptionMethod;
+  plaintext: string;
+  method: MessageEncryptionMethod;
 };
 
 type DecryptMessageRequestBase = {
-    ciphertext: string;
+  ciphertext: string;
 };
 
 export type DecryptRsaRequest = DecryptMessageRequestBase & {
-    method: 'RSA-32768';
-    privateKey: string;
+  method: 'RSA-32768';
+  privateKey: string;
 };
 
 export type DecryptKuznyechikRequest = DecryptMessageRequestBase & {
-    method: 'Кузнечик';
-    key: string;
+  method: 'Кузнечик';
+  key: string;
 };
 
 export type DecryptMessageRequest = DecryptRsaRequest | DecryptKuznyechikRequest;
 
 export type DecryptMessageResult = {
-    plaintext: string;
+  plaintext: string;
 };
 
 export type ExportPdfWithSignatureRequest = {
-    id: number;
+  id: number;
 };
 
 export type SignedPdfDocument = {
-    content: ArrayBuffer;
-    filename: string;
+  content: ArrayBuffer;
+  filename: string;
 };

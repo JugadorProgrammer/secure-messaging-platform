@@ -18,14 +18,8 @@ function formatTimestamp(value: string): string {
 }
 
 export function MessageWidget({message}: MessageWidgetProps) {
-  const {
-    canCheckFromCiphertext,
-    isChecking,
-    isExportingPdf,
-    notice,
-    checkFromCiphertext,
-    exportPdf,
-  } = useMessageWidget(message);
+  const {isChecking, isExportingPdf, notice, checkFromCiphertext, exportPdf} =
+    useMessageWidget(message);
 
   return (
     <article className={styles['message-widget']}>
@@ -39,7 +33,7 @@ export function MessageWidget({message}: MessageWidgetProps) {
             className={styles['message-widget__action']}
             type="button"
             onClick={checkFromCiphertext}
-            disabled={!canCheckFromCiphertext || isChecking}
+            disabled={isChecking}
           >
             Проверить из шифртекста
           </button>
@@ -56,21 +50,19 @@ export function MessageWidget({message}: MessageWidgetProps) {
       <div className={styles['message-widget__content']}>
         <MessageField label="Исходный текст" value={message.plaintext} />
         <MessageField label="Шифртекст" value={message.ciphertext} />
-        {message.keys ? (
-          <div className={styles['message-widget__keys']}>
-            {message.method === 'RSA-32768' ? (
-              <>
-                <MessageField label="Публичный ключ" value={message.keys.publicKey} />
-                <MessageField label="Секретный ключ" value={message.keys.privateKey} />
-              </>
-            ) : (
-              <>
-                <MessageField label="Ключ (hex)" value={message.keys.key} />
-                <MessageField label="IV (hex)" value={message.keys.iv} />
-              </>
-            )}
-          </div>
-        ) : null}
+        <div className={styles['message-widget__keys']}>
+          {message.method === 'RSA-32768' ? (
+            <>
+              <MessageField label="Публичный ключ" value={message.keys.publicKey} />
+              <MessageField label="Секретный ключ" value={message.keys.privateKey} />
+            </>
+          ) : (
+            <>
+              <MessageField label="Ключ (hex)" value={message.keys.key} />
+              <MessageField label="IV (hex)" value={message.keys.iv} />
+            </>
+          )}
+        </div>
       </div>
       {notice !== null ? (
         <Notification key={notice.notificationDate} message={notice.message} />

@@ -53,16 +53,3 @@ export const Kuznyechik: Story = {
     message: kuznyechikMessage,
   },
 };
-
-export const WithoutKeys: Story = {
-  name: 'Без ключей',
-  args: {
-    message: {
-      id: 3,
-      method: 'RSA-32768',
-      plaintext: 'Без ключей',
-      ciphertext: 'ciphertext-no-keys',
-      timestamp: '2026-11-08T12:10:00.000Z',
-    },
-  },
-};

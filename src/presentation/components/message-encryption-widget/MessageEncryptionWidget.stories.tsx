@@ -28,6 +28,7 @@ export const SuccessRsa: Story = {
   async beforeEach() {
     mocked(encryptMessage).mockResolvedValue(
       Result.success({
+        id: 1,
         method: 'RSA-32768',
         plaintext: 'Секретное сообщение',
         ciphertext: 'ciphertext-rsa',
@@ -52,6 +53,7 @@ export const SuccessKuznyechik: Story = {
     );
     mocked(encryptMessage).mockResolvedValue(
       Result.success({
+        id: 2,
         method: 'Кузнечик',
         plaintext: 'Секретное сообщение',
         ciphertext: 'ciphertext-kuznyechik',
