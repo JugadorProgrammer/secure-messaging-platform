@@ -12,19 +12,20 @@ export const encryptMessageRequestSchema = z.object({
 });
 
 const rsaKeysSchema = z.object({
-    publicKey: nonEmptyString,
-    privateKey: nonEmptyString,
+  publicKey: nonEmptyString,
+  privateKey: nonEmptyString,
 });
 
 const kuznyechikKeysSchema = z.object({
-    key: nonEmptyString,
-    iv: nonEmptyString,
+  key: nonEmptyString,
+  iv: nonEmptyString,
 });
 
 const messageBaseSchema = z.object({
-    plaintext: nonEmptyString,
-    ciphertext: nonEmptyString,
-    timestamp: z.iso.datetime(),
+  id: z.int().positive(),
+  plaintext: nonEmptyString,
+  ciphertext: nonEmptyString,
+  timestamp: z.iso.datetime(),
 });
 
 export const rsaMessageSchema = messageBaseSchema.extend({
@@ -38,8 +39,8 @@ export const kuznyechikMessageSchema = messageBaseSchema.extend({
 });
 
 export const messageSchema = z.discriminatedUnion('method', [
-    rsaMessageSchema,
-    kuznyechikMessageSchema,
+  rsaMessageSchema,
+  kuznyechikMessageSchema,
 ]);
 
 const decryptMessageRequestBaseSchema = z.object({
@@ -64,4 +65,8 @@ export const decryptMessageRequestSchema = z.discriminatedUnion('method', [
 
 export const decryptMessageResultSchema = z.object({
   plaintext: nonEmptyString,
+});
+
+export const exportPdfWithSignatureRequestSchema = z.object({
+  id: z.int().positive(),
 });

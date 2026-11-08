@@ -1,0 +1,51 @@
+.message-field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.message-field__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 0.5rem;
+}
+
+.message-field__label {
+  margin: 0;
+  color: var(--black-700);
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.message-field__copy {
+  padding: 0.25rem 0.5rem;
+  border: 0;
+  border-radius: 0.375rem;
+  color: var(--black-700);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--gray-300);
+  transition: all 0.3s ease;
+}
+
+.message-field__copy:hover {
+  background: var(--gray-500);
+}
+
+.message-field__value {
+  margin: 0;
+  max-height: 12rem;
+  overflow: auto;
+  padding: 0.5rem;
+  border-radius: 0.5rem;
+  background: var(--gray-300);
+  color: var(--black-700);
+  white-space: pre-wrap;
+  word-break: break-all;
+  font-family: var(--font-mono);
+  font-size: 0.6875rem;
+  line-height: 1rem;
+  font-weight: 600;
+}

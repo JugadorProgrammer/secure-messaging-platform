@@ -1,6 +1,13 @@
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {EncryptMessageRequest, Message} from '@/domain/message';
 import type {DecryptMessageRequest, DecryptMessageResult} from '@/domain/message';
+import type {
+  DecryptMessageRequest,
+  DecryptMessageResult,
+  ExportPdfWithSignatureRequest,
+  Message,
+  SignedPdfDocument,
+} from '@/domain/message';
 import type {Role} from '@/domain/role';
 
 import type {Result} from '@/application/Result';
@@ -10,4 +17,13 @@ export interface ICoordGateway {
   getEnabledEncryptionMethods(): Promise<Result<EncryptionMethod[]>>;
   encryptMessage(cookie: string, request: EncryptMessageRequest): Promise<Result<Message>>;
   decryptMessage(cookie: string, request: DecryptMessageRequest): Promise<Result<DecryptMessageResult>>;
+  getAllMessages(cookie: string): Promise<Result<Message[]>>;
+  decryptMessage(
+    cookie: string,
+    request: DecryptMessageRequest,
+  ): Promise<Result<DecryptMessageResult>>;
+  exportPdfWithSignature(
+    cookie: string,
+    request: ExportPdfWithSignatureRequest,
+  ): Promise<Result<SignedPdfDocument>>;
 }

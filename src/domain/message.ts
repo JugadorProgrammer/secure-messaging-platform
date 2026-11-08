@@ -23,29 +23,30 @@ export type DecryptMessageResult = {
 };
 
 export type RsaKeys = {
-    publicKey: string;
-    privateKey: string;
+  publicKey: string;
+  privateKey: string;
 };
 
 export type KuznyechikKeys = {
-    key: string;
-    iv: string;
+  key: string;
+  iv: string;
 };
 
 type MessageBase = {
-    plaintext: string;
-    ciphertext: string;
-    timestamp: string;
+  id: number;
+  plaintext: string;
+  ciphertext: string;
+  timestamp: string;
 };
 
 export type RsaMessage = MessageBase & {
-    method: 'RSA-32768';
-    keys: RsaKeys;
+  method: 'RSA-32768';
+  keys?: RsaKeys;
 };
 
 export type KuznyechikMessage = MessageBase & {
-    method: 'Кузнечик';
-    keys: KuznyechikKeys;
+  method: 'Кузнечик';
+  keys?: KuznyechikKeys;
 };
 
 export type Message = RsaMessage | KuznyechikMessage;
@@ -53,4 +54,33 @@ export type Message = RsaMessage | KuznyechikMessage;
 export type EncryptMessageRequest = {
     plaintext: string;
     method: MessageEncryptionMethod;
+};
+
+type DecryptMessageRequestBase = {
+    ciphertext: string;
+};
+
+export type DecryptRsaRequest = DecryptMessageRequestBase & {
+    method: 'RSA-32768';
+    privateKey: string;
+};
+
+export type DecryptKuznyechikRequest = DecryptMessageRequestBase & {
+    method: 'Кузнечик';
+    key: string;
+};
+
+export type DecryptMessageRequest = DecryptRsaRequest | DecryptKuznyechikRequest;
+
+export type DecryptMessageResult = {
+    plaintext: string;
+};
+
+export type ExportPdfWithSignatureRequest = {
+    id: number;
+};
+
+export type SignedPdfDocument = {
+    content: ArrayBuffer;
+    filename: string;
 };

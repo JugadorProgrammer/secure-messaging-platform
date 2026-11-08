@@ -5,7 +5,9 @@ import {asClass, asFunction, createContainer, InjectionMode} from 'awilix';
 import {EncryptMessageService} from '@/application/EncryptMessageService';
 import {DecryptMessageService} from '@/application/DecryptMessageService';
 import {EncryptionMethodService} from '@/application/EncryptionMethodService';
+import {ExportPdfWithSignatureService} from '@/application/ExportPdfWithSignatureService';
 import {LoginService} from '@/application/LoginService';
+import {MessageService} from '@/application/MessageService';
 import {PasswordRecoveryService} from '@/application/PasswordRecoveryService';
 import {RegistrationService} from '@/application/RegistrationService';
 import {RoleService} from '@/application/RoleService';
@@ -23,6 +25,9 @@ export const appConfig = createContainer({
   encryptionMethodService: asClass(EncryptionMethodService).singleton(),
   encryptMessageService: asClass(EncryptMessageService).singleton(),
   decryptMessageService: asClass(DecryptMessageService).singleton(),
+  messageService: asClass(MessageService).singleton(),
+  decryptMessageService: asClass(DecryptMessageService).singleton(),
+  exportPdfWithSignatureService: asClass(ExportPdfWithSignatureService).singleton(),
   loginService: asClass(LoginService).singleton(),
   passwordRecoveryService: asClass(PasswordRecoveryService).singleton(),
   registrationService: asClass(RegistrationService).singleton(),
