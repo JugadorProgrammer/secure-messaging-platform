@@ -39,7 +39,10 @@ export class HttpCoordGateway implements ICoordGateway {
 
   async getRoles(): Promise<Result<Role[]>> {
     try {
-      const response = await fetch(`${this.coordUrl}${ROLES_PATH}`);
+      const response = await fetch(
+        `${this.coordUrl}${ROLES_PATH}`,
+        new HttpRequestBuilder().build(),
+      );
 
       return await castResponse(response, z.array(roleSchema));
     } catch (error) {
@@ -50,7 +53,10 @@ export class HttpCoordGateway implements ICoordGateway {
 
   async getEnabledEncryptionMethods(): Promise<Result<EncryptionMethod[]>> {
     try {
-      const response = await fetch(`${this.coordUrl}${ENABLED_ENCRYPTION_METHODS_PATH}`);
+      const response = await fetch(
+        `${this.coordUrl}${ENABLED_ENCRYPTION_METHODS_PATH}`,
+        new HttpRequestBuilder().build(),
+      );
 
       return await castResponse(response, z.array(encryptionMethodSchema));
     } catch (error) {

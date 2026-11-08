@@ -1,19 +1,17 @@
 import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
 import {Result} from '@/application/Result';
 
+import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
 import {recoveryCodesSchema} from '@/infrastructure/http/RegistrationService/recoveryCodesSchema';
 
 const SIGNUP_PATH = '/api/signup';
 
 export async function signup(registration: Registration): Promise<Result<string[]>> {
   try {
-    const response = await fetch(SIGNUP_PATH, {
-      method: 'POST',
-      headers: {
-        'content-type': 'application/json',
-      },
-      body: JSON.stringify(registration),
-    });
+    const response = await fetch(
+      SIGNUP_PATH,
+      new HttpRequestBuilder().post().json(registration).build(),
+    );
 
     if (!response.ok) {
       return Result.error(new Error('Не удалось зарегистрироваться.'));
