@@ -14,6 +14,7 @@ export type KuznyechikKeys = {
 
 type MessageBase = {
   id: number;
+  userId: number;
   plaintext: string;
   ciphertext: string;
   timestamp: string;

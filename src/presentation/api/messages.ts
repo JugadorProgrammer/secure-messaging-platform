@@ -1,15 +1,14 @@
 import {z} from 'zod';
 
-import type {Message} from '@/domain/message';
-
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 import {Result} from '@/application/Result';
 
 import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
-import {messageSchema} from '@/infrastructure/http/MessageService/messageSchema';
+import {messageDtoSchema} from '@/infrastructure/http/MessageService/messageSchema';
 
 const MESSAGES_PATH = '/api/messages';
 
-export async function getAllMessages(): Promise<Result<Message[]>> {
+export async function getAllMessages(): Promise<Result<MessageDto[]>> {
   try {
     const response = await fetch(MESSAGES_PATH, new HttpRequestBuilder().build());
 
@@ -17,7 +16,7 @@ export async function getAllMessages(): Promise<Result<Message[]>> {
       return Result.error(new Error('Не удалось загрузить журнал сообщений.'));
     }
 
-    return Result.success(z.array(messageSchema).parse(await response.json()));
+    return Result.success(z.array(messageDtoSchema).parse(await response.json()));
   } catch {
     return Result.error(new Error('Не удалось загрузить журнал сообщений.'));
   }

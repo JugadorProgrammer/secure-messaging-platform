@@ -2,7 +2,7 @@
 
 import type {ChangeEvent, FormEvent} from 'react';
 
-import type {Message} from '@/domain/message';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 
 import {Notification} from '@/presentation/components/notification/Notification';
 
@@ -11,7 +11,7 @@ import {useMessageEncryptionWidget} from './useMessageEncryptionWidget';
 import styles from './MessageEncryptionWidget.module.css';
 
 type MessageEncryptionWidgetProps = {
-  onEncrypted: (message: Message) => void;
+  onEncrypted: (message: MessageDto) => void;
 };
 
 export function MessageEncryptionWidget({onEncrypted}: MessageEncryptionWidgetProps) {

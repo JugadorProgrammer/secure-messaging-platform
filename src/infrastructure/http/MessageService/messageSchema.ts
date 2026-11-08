@@ -21,26 +21,32 @@ const kuznyechikKeysSchema = z.object({
   iv: nonEmptyString,
 });
 
-const messageBaseSchema = z.object({
+const userSchema = z.object({
   id: z.int().positive(),
+  name: nonEmptyString,
+});
+
+const messageDtoBaseSchema = z.object({
+  id: z.int().positive(),
+  user: userSchema,
   plaintext: nonEmptyString,
   ciphertext: nonEmptyString,
   timestamp: z.iso.datetime(),
 });
 
-export const rsaMessageSchema = messageBaseSchema.extend({
+export const rsaMessageDtoSchema = messageDtoBaseSchema.extend({
   method: z.literal('RSA-32768'),
   keys: rsaKeysSchema,
 });
 
-export const kuznyechikMessageSchema = messageBaseSchema.extend({
+export const kuznyechikMessageDtoSchema = messageDtoBaseSchema.extend({
   method: z.literal('Кузнечик'),
   keys: kuznyechikKeysSchema,
 });
 
-export const messageSchema = z.discriminatedUnion('method', [
-  rsaMessageSchema,
-  kuznyechikMessageSchema,
+export const messageDtoSchema = z.discriminatedUnion('method', [
+  rsaMessageDtoSchema,
+  kuznyechikMessageDtoSchema,
 ]);
 
 const decryptMessageRequestBaseSchema = z.object({

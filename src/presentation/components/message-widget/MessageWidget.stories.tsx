@@ -1,11 +1,12 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 
-import type {Message} from '@/domain/message';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 
 import {MessageWidget} from './MessageWidget';
 
-const rsaMessage: Message = {
+const rsaMessage: MessageDto = {
   id: 1,
+  user: {id: 1, name: 'alice'},
   method: 'RSA-32768',
   plaintext: 'Секретное сообщение',
   ciphertext: 'ciphertext-rsa',
@@ -16,8 +17,9 @@ const rsaMessage: Message = {
   },
 };
 
-const kuznyechikMessage: Message = {
+const kuznyechikMessage: MessageDto = {
   id: 2,
+  user: {id: 2, name: 'bob'},
   method: 'Кузнечик',
   plaintext: 'Другое сообщение',
   ciphertext: 'ciphertext-kuznyechik',

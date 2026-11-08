@@ -1,7 +1,6 @@
 import {z} from 'zod';
 
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
-import type {Message} from '@/domain/message';
 import type {Role} from '@/domain/role';
 
 import type {ICoordGateway} from '@/application/ICoordGateway/ICoordGateway';
@@ -9,13 +8,14 @@ import type {DecryptMessageRequest} from '@/application/IMessageService/MessageS
 import type {DecryptMessageResult} from '@/application/IMessageService/MessageService/DecryptMessageResult';
 import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
 import type {ExportPdfWithSignatureRequest} from '@/application/IMessageService/MessageService/ExportPdfWithSignatureRequest';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 import type {SignedPdfDocument} from '@/application/IMessageService/MessageService/SignedPdfDocument';
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
 import {encryptionMethodSchema} from './EncryptionMethodService/encryptionMethodSchema';
 import {HttpRequestBuilder} from './HttpRequestBuilder';
-import {decryptMessageResultSchema, messageSchema} from './MessageService/messageSchema';
+import {decryptMessageResultSchema, messageDtoSchema} from './MessageService/messageSchema';
 import {roleSchema} from './RoleService/roleSchema';
 
 type HttpCoordGatewayDependencies = {
@@ -65,14 +65,14 @@ export class HttpCoordGateway implements ICoordGateway {
     }
   }
 
-  async encryptMessage(cookie: string, request: EncryptMessageRequest): Promise<Result<Message>> {
+  async encryptMessage(cookie: string, request: EncryptMessageRequest): Promise<Result<MessageDto>> {
     try {
       const response = await fetch(
         `${this.coordUrl}${ENCRYPT_PATH}`,
         new HttpRequestBuilder().post().cookie(cookie).json(request).build(),
       );
 
-      return await castResponse(response, messageSchema);
+      return await castResponse(response, messageDtoSchema);
     } catch (error) {
       console.error(error);
       return Result.error(new Error('Ответ не получен'));
@@ -96,14 +96,14 @@ export class HttpCoordGateway implements ICoordGateway {
     }
   }
 
-  async getAllMessages(cookie: string): Promise<Result<Message[]>> {
+  async getAllMessages(cookie: string): Promise<Result<MessageDto[]>> {
     try {
       const response = await fetch(
         `${this.coordUrl}${GET_ALL_MESSAGES_PATH}`,
         new HttpRequestBuilder().cookie(cookie).build(),
       );
 
-      return await castResponse(response, z.array(messageSchema));
+      return await castResponse(response, z.array(messageDtoSchema));
     } catch (error) {
       console.error(error);
       return Result.error(new Error('Ответ не получен'));

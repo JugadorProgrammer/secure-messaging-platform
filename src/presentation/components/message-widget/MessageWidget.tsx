@@ -1,6 +1,6 @@
 'use client';
 
-import type {Message} from '@/domain/message';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 
 import {MessageField} from '@/presentation/components/message-widget/message-field/MessageField';
 import {Notification} from '@/presentation/components/notification/Notification';
@@ -10,7 +10,7 @@ import {useMessageWidget} from './useMessageWidget';
 import styles from './MessageWidget.module.css';
 
 type MessageWidgetProps = {
-  message: Message;
+  message: MessageDto;
 };
 
 function formatTimestamp(value: string): string {
@@ -26,7 +26,9 @@ export function MessageWidget({message}: MessageWidgetProps) {
       <header className={styles['message-widget__header']}>
         <div className={styles['message-widget__heading']}>
           <h3 className={styles['message-widget__title']}>{message.method}</h3>
-          <p className={styles['message-widget__timestamp']}>{formatTimestamp(message.timestamp)}</p>
+          <p className={styles['message-widget__meta']}>
+            {message.user.name} · {formatTimestamp(message.timestamp)}
+          </p>
         </div>
         <div className={styles['message-widget__actions']}>
           <button

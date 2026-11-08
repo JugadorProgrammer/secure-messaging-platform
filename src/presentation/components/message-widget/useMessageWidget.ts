@@ -2,8 +2,8 @@
 
 import {useState} from 'react';
 
-import type {Message} from '@/domain/message';
 import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 import type {SignedPdfDocument} from '@/application/IMessageService/MessageService/SignedPdfDocument';
 
 import {decryptMessage} from '@/presentation/api/decrypt';
@@ -19,7 +19,7 @@ type UseMessageWidgetState = {
   exportPdf: () => Promise<void>;
 };
 
-function toDecryptRequest(message: Message): DecryptMessageRequest {
+function toDecryptRequest(message: MessageDto): DecryptMessageRequest {
   if (message.method === 'RSA-32768') {
     return {
       method: 'RSA-32768',
@@ -46,7 +46,7 @@ function downloadPdf(pdf: SignedPdfDocument): void {
   URL.revokeObjectURL(url);
 }
 
-export function useMessageWidget(message: Message): UseMessageWidgetState {
+export function useMessageWidget(message: MessageDto): UseMessageWidgetState {
   const [isChecking, setIsChecking] = useState(false);
   const [isExportingPdf, setIsExportingPdf] = useState(false);
   const {notice, show, dismiss} = useScreenNotice();

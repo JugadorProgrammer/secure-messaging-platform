@@ -2,7 +2,7 @@
 
 import {useEffect, useState} from 'react';
 
-import type {Message} from '@/domain/message';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 
 import {getAllMessages} from '@/presentation/api/messages';
 
@@ -10,7 +10,7 @@ type MessageJournalLoadStatus = 'idle' | 'loading' | 'ok' | 'failed';
 
 type MessageJournalWidgetState = {
   status: MessageJournalLoadStatus;
-  messages: Message[];
+  messages: MessageDto[];
 };
 
 const RETRY_LIMIT = 3;
@@ -18,7 +18,7 @@ const RETRY_DELAY_MS = 5000;
 
 export function useMessageJournalWidget(): MessageJournalWidgetState {
   const [status, setStatus] = useState<MessageJournalLoadStatus>('loading');
-  const [messages, setMessages] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<MessageDto[]>([]);
 
   useEffect(() => {
     let isCancelled = false;

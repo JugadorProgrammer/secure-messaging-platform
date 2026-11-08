@@ -2,7 +2,7 @@
 
 import {useState} from 'react';
 
-import type {Message} from '@/domain/message';
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 
 import {MessageDecryptionWidget} from '@/presentation/components/message-decryption-widget/MessageDecryptionWidget';
 import {MessageEncryptionWidget} from '@/presentation/components/message-encryption-widget/MessageEncryptionWidget';
@@ -11,9 +11,9 @@ import {MessageJournalWidget} from '@/presentation/components/message-journal-wi
 import styles from './WorkspaceScreen.module.css';
 
 export function WorkspaceScreen() {
-  const [, setMessageJournal] = useState<readonly Message[]>([]);
+  const [, setMessageJournal] = useState<readonly MessageDto[]>([]);
 
-  function handleEncrypted(message: Message): void {
+  function handleEncrypted(message: MessageDto): void {
     setMessageJournal((journal) => [...journal, message]);
   }
 

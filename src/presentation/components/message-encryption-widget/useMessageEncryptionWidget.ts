@@ -2,9 +2,10 @@
 
 import {useEffect, useState} from 'react';
 
-import type {Message, MessageEncryptionMethod} from '@/domain/message';
+import type {MessageEncryptionMethod} from '@/domain/message';
 import {MESSAGE_ENCRYPTION_METHODS} from '@/domain/message';
 
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 import {Result} from '@/application/Result';
 
 import {encryptMessage} from '@/presentation/api/encrypt';
@@ -12,7 +13,7 @@ import {getEnabledEncryptionMethods} from '@/presentation/api/encryptionMethods'
 import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
 
 type UseMessageEncryptionWidgetParams = {
-  onEncrypted: (message: Message) => void;
+  onEncrypted: (message: MessageDto) => void;
 };
 
 type MessageEncryptionWidgetState = {

@@ -1,8 +1,7 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
 import {mocked} from 'storybook/test';
 
-import type {Message} from '@/domain/message';
-
+import type {MessageDto} from '@/application/IMessageService/MessageService/MessageDto';
 import {Result} from '@/application/Result';
 
 import {getAllMessages} from '@/presentation/api/messages';
@@ -28,6 +27,7 @@ export const WithMessages: Story = {
       Result.success([
         {
           id: 1,
+          user: {id: 1, name: 'alice'},
           method: 'RSA-32768',
           plaintext: 'Секретное сообщение',
           ciphertext: 'ciphertext-rsa',
@@ -39,6 +39,7 @@ export const WithMessages: Story = {
         },
         {
           id: 2,
+          user: {id: 2, name: 'bob'},
           method: 'Кузнечик',
           plaintext: 'Другое сообщение',
           ciphertext: 'ciphertext-kuznyechik',
@@ -64,7 +65,7 @@ export const Loading: Story = {
   name: 'Загрузка',
   async beforeEach() {
     mocked(getAllMessages).mockImplementation(
-      () => new Promise<Result<Message[]>>(() => {}),
+      () => new Promise<Result<MessageDto[]>>(() => {}),
     );
   },
 };
