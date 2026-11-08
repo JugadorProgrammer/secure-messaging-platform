@@ -1,6 +1,7 @@
 import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
 import {Result} from '@/application/Result';
 
+import {castResponse} from '@/infrastructure/http/castResponse';
 import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
 import {recoveryCodesSchema} from '@/infrastructure/http/RegistrationService/recoveryCodesSchema';
 
@@ -13,14 +14,9 @@ export async function signup(registrationRequest: RegistrationRequest): Promise<
       new HttpRequestBuilder().post().json(registrationRequest).build(),
     );
 
-    if (!response.ok) {
-      return Result.error(new Error('Не удалось зарегистрироваться.'));
-    }
-
-    const codes = recoveryCodesSchema.parse(await response.json());
-
-    return Result.success(codes);
-  } catch {
-    return Result.error(new Error('Не удалось зарегистрироваться.'));
+    return await castResponse(response, recoveryCodesSchema);
+  } catch (error) {
+    console.error(error);
+    return Result.error(new Error('Ответ не получен'));
   }
 }
