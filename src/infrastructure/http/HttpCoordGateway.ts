@@ -23,11 +23,11 @@ type HttpCoordGatewayDependencies = {
 };
 
 const ROLES_PATH = '/api/roles';
-const ENABLED_ENCRYPTION_METHODS_PATH = '/getEnabledEncryptionMethods';
-const ENCRYPT_PATH = '/encrypt';
-const DECRYPT_PATH = '/decrypt';
-const GET_ALL_MESSAGES_PATH = '/getAllMessages';
-const EXPORT_PDF_WITH_SIGNATURE_PATH = '/exportPdfWithSignature';
+const ENABLED_ENCRYPTION_METHODS_PATH = '/api/getEnabledEncryptionMethods';
+const ENCRYPT_PATH = '/api/encrypt';
+const DECRYPT_PATH = '/api/decrypt';
+const GET_ALL_MESSAGES_PATH = '/api/getAllMessages';
+const EXPORT_PDF_WITH_SIGNATURE_PATH = '/api/exportPdfWithSignature';
 const DEFAULT_PDF_FILENAME = 'message.pdf';
 
 export class HttpCoordGateway implements ICoordGateway {
