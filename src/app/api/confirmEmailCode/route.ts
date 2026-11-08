@@ -8,29 +8,25 @@ import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {handleErrors} from '@/presentation/access/handleErrors';
 import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
 export const POST = compose(
   castFromJson(emailCodeSchema),
   validateHasCookies(400),
-  async (request: EmailCode & {cookie: string}) => {
-    try {
-      const result = await appConfig
-        .resolve('loginService')
-        .confirmEmailCode(request.cookie, request);
+  handleErrors(async (request: EmailCode & {cookie: string}) => {
+    const result = await appConfig
+      .resolve('loginService')
+      .confirmEmailCode(request.cookie, request);
 
-      if (!result.isSuccess) {
-        console.error(result.error);
-        return new Response(null, {status: 503});
-      }
-
-      const response = new NextResponse(null, {status: 204});
-      writeSetCookies(response, result.success);
-
-      return response;
-    } catch (error) {
-      console.error(error);
+    if (!result.isSuccess) {
+      console.error(result.error);
       return new Response(null, {status: 503});
     }
-  },
+
+    const response = new NextResponse(null, {status: 204});
+    writeSetCookies(response, result.success);
+
+    return response;
+  }),
 );

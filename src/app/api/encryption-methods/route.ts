@@ -1,7 +1,10 @@
 import {appConfig} from '@/appconfig';
 
-export async function GET(): Promise<Response> {
-  try {
+import {compose} from '@/presentation/access/auth';
+import {handleErrors} from '@/presentation/access/handleErrors';
+
+export const GET = compose(
+  handleErrors(async () => {
     const result = await appConfig.resolve('encryptionMethodService').getEnabledEncryptionMethods();
 
     if (!result.isSuccess) {
@@ -10,8 +13,5 @@ export async function GET(): Promise<Response> {
     }
 
     return Response.json(result.success);
-  } catch (error) {
-    console.error(error);
-    return new Response(null, {status: 503});
-  }
-}
+  }),
+);

@@ -9,31 +9,29 @@ import {newPasswordSchema} from '@/infrastructure/http/PasswordRecoveryService/n
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {handleErrors} from '@/presentation/access/handleErrors';
 
 export const POST = compose(
   castFromJson(newPasswordSchema),
-  async (newPassword: NewPassword) => {
-    try {
-      const cookieStore = await cookies();
+  handleErrors(async (newPassword: NewPassword) => {
+    const cookieStore = await cookies();
 
-      if (!cookieStore.get(RESTORE_PASSWORD_COOKIE)?.value) {
-        return new Response(null, {status: 400});
-      }
+    if (!cookieStore.get(RESTORE_PASSWORD_COOKIE)?.value) {
+      return new Response(null, {status: 400});
+    }
 
-      const result = await appConfig.resolve('passwordRecoveryService').confirmNewPassword(cookieStore.toString(), newPassword);
+    const result = await appConfig
+      .resolve('passwordRecoveryService')
+      .confirmNewPassword(cookieStore.toString(), newPassword);
 
-      if (!result.isSuccess) {
-        console.error(result.error);
-        return new Response(null, {status: 503});
-      }
-
-      const response = new NextResponse(null, {status: 204});
-      response.cookies.delete(RESTORE_PASSWORD_COOKIE);
-
-      return response;
-    } catch (error) {
-      console.error(error);
+    if (!result.isSuccess) {
+      console.error(result.error);
       return new Response(null, {status: 503});
     }
-  },
+
+    const response = new NextResponse(null, {status: 204});
+    response.cookies.delete(RESTORE_PASSWORD_COOKIE);
+
+    return response;
+  }),
 );
