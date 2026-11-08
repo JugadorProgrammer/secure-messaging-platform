@@ -4,7 +4,7 @@ import {mocked} from 'storybook/test';
 import {Result} from '@/application/Result';
 
 import {decryptMessage} from '@/presentation/api/decrypt';
-import {getEnabledEncryptionMethods} from '@/presentation/api/encryptionMethods';
+import {getAllEncryptionMethods} from '@/presentation/api/encryptionMethods';
 
 import {MessageDecryptionWidget} from './MessageDecryptionWidget';
 
@@ -38,7 +38,7 @@ export const SuccessRsa: Story = {
 export const SuccessKuznyechik: Story = {
   name: 'Успех Кузнечик',
   async beforeEach() {
-    mocked(getEnabledEncryptionMethods).mockResolvedValue(
+    mocked(getAllEncryptionMethods).mockResolvedValue(
       Result.success([
         {name: 'RSA-32768', enabled: true},
         {name: 'Кузнечик', enabled: true},

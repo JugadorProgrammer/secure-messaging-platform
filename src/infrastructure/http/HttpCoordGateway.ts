@@ -23,7 +23,7 @@ type HttpCoordGatewayDependencies = {
 };
 
 const ROLES_PATH = '/api/roles';
-const ENABLED_ENCRYPTION_METHODS_PATH = '/api/getEnabledEncryptionMethods';
+const ALL_ENCRYPTION_METHODS_PATH = '/api/getAllEncryptionMethods';
 const ENCRYPT_PATH = '/api/encrypt';
 const DECRYPT_PATH = '/api/decrypt';
 const GET_ALL_MESSAGES_PATH = '/api/getAllMessages';
@@ -51,10 +51,10 @@ export class HttpCoordGateway implements ICoordGateway {
     }
   }
 
-  async getEnabledEncryptionMethods(): Promise<Result<EncryptionMethod[]>> {
+  async getAllEncryptionMethods(): Promise<Result<EncryptionMethod[]>> {
     try {
       const response = await fetch(
-        `${this.coordUrl}${ENABLED_ENCRYPTION_METHODS_PATH}`,
+        `${this.coordUrl}${ALL_ENCRYPTION_METHODS_PATH}`,
         new HttpRequestBuilder().build(),
       );
 

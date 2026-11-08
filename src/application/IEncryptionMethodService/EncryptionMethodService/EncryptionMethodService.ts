@@ -15,7 +15,7 @@ export class EncryptionMethodService implements IEncryptionMethodService {
     this.coordGateway = coordGateway;
   }
 
-  getEnabledEncryptionMethods(): Promise<Result<EncryptionMethod[]>> {
-    return this.coordGateway.getEnabledEncryptionMethods();
+  getAllEncryptionMethods(): Promise<Result<EncryptionMethod[]>> {
+    return this.coordGateway.getAllEncryptionMethods();
   }
 }

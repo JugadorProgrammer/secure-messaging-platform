@@ -1,6 +1,7 @@
 'use client';
 
 import {useEffect, useState} from 'react';
+import {useShallow} from 'zustand/react/shallow';
 
 import type {MessageEncryptionMethod} from '@/domain/message';
 import {MESSAGE_ENCRYPTION_METHODS} from '@/domain/message';
@@ -9,8 +10,11 @@ import type {MessageDto} from '@/application/IMessageService/MessageService/Mess
 import {Result} from '@/application/Result';
 
 import {encryptMessage} from '@/presentation/api/encrypt';
-import {getEnabledEncryptionMethods} from '@/presentation/api/encryptionMethods';
 import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
+import {
+  selectEnabledMessageEncryptionMethods,
+  useEncryptionMethodsStore,
+} from '@/presentation/stores/useEncryptionMethodsStore';
 
 type UseMessageEncryptionWidgetParams = {
   onEncrypted: (message: MessageDto) => void;
@@ -33,40 +37,24 @@ export function useMessageEncryptionWidget({
 }: UseMessageEncryptionWidgetParams): MessageEncryptionWidgetState {
   const [plaintext, setPlaintext] = useState('');
   const [method, setMethodState] = useState<MessageEncryptionMethod | null>(null);
-  const [methods, setMethods] = useState<readonly MessageEncryptionMethod[] | null>(null);
-  const [isMethodsFailed, setIsMethodsFailed] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const {notice, show, dismiss} = useScreenNotice();
+  const methods = useEncryptionMethodsStore(useShallow(selectEnabledMessageEncryptionMethods));
+  const isMethodsFailed = useEncryptionMethodsStore((state) => state.isEncryptionMethodsLoadFailed);
+  const loadEncryptionMethods = useEncryptionMethodsStore((state) => state.loadEncryptionMethods);
 
   useEffect(() => {
-    let isCancelled = false;
+    void loadEncryptionMethods();
+  }, [loadEncryptionMethods]);
 
-    void getEnabledEncryptionMethods().then((result) => {
-      if (isCancelled) {
-        return;
-      }
+  useEffect(() => {
+    if (methods === null || methods.length === 0) {
+      setMethodState(null);
+      return;
+    }
 
-      if (!result.isSuccess) {
-        setMethods(null);
-        setMethodState(null);
-        setIsMethodsFailed(true);
-        return;
-      }
-
-      const enabledMethods = result.success
-        .filter((item) => item.enabled)
-        .map((item) => item.name)
-        .filter(isMessageEncryptionMethod);
-
-      setMethods(enabledMethods);
-      setMethodState(enabledMethods[0] ?? null);
-      setIsMethodsFailed(false);
-    });
-
-    return () => {
-      isCancelled = true;
-    };
-  }, []);
+    setMethodState((current) => (current !== null && methods.includes(current) ? current : methods[0]));
+  }, [methods]);
 
   function setMethod(value: string): void {
     if (isMessageEncryptionMethod(value)) {

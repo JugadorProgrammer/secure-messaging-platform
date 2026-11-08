@@ -2,9 +2,10 @@ import type {Preview} from '@storybook/nextjs-vite';
 import {mocked, sb} from 'storybook/test';
 
 import {Result} from '@/application/Result';
-import {getEnabledEncryptionMethods} from '@/presentation/api/encryptionMethods';
+import {getAllEncryptionMethods} from '@/presentation/api/encryptionMethods';
 import {getAllMessages} from '@/presentation/api/messages';
 import {getRoles} from '@/presentation/api/roles';
+import {resetEncryptionMethodsStore} from '@/presentation/stores/useEncryptionMethodsStore';
 
 import '../src/app/globals.css';
 
@@ -23,8 +24,9 @@ sb.mock(import('../src/presentation/api/signup.ts'));
 
 const preview: Preview = {
   beforeEach() {
+    resetEncryptionMethodsStore();
     mocked(getRoles).mockResolvedValue(Result.success(sampleRoles));
-    mocked(getEnabledEncryptionMethods).mockResolvedValue(Result.success(sampleEncryptionMethods));
+    mocked(getAllEncryptionMethods).mockResolvedValue(Result.success(sampleEncryptionMethods));
     mocked(getAllMessages).mockResolvedValue(Result.success([]));
   },
 };

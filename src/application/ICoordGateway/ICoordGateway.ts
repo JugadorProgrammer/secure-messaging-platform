@@ -11,7 +11,7 @@ import type {Result} from '@/application/Result';
 
 export interface ICoordGateway {
   getRoles(): Promise<Result<Role[]>>;
-  getEnabledEncryptionMethods(): Promise<Result<EncryptionMethod[]>>;
+  getAllEncryptionMethods(): Promise<Result<EncryptionMethod[]>>;
   encryptMessage(cookie: string, request: EncryptMessageRequest): Promise<Result<MessageDto>>;
   decryptMessage(
     cookie: string,

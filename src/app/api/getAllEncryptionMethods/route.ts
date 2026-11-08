@@ -5,7 +5,7 @@ import {handleErrors} from '@/presentation/access/handleErrors';
 
 export const GET = compose(
   handleErrors(async () => {
-    const result = await appConfig.resolve('encryptionMethodService').getEnabledEncryptionMethods();
+    const result = await appConfig.resolve('encryptionMethodService').getAllEncryptionMethods();
 
     if (!result.isSuccess) {
       console.error(result.error);

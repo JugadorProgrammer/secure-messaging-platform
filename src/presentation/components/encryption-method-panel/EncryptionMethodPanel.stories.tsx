@@ -5,7 +5,7 @@ import type {EncryptionMethod} from '@/domain/encryptionMethod';
 
 import {Result} from '@/application/Result';
 
-import {getEnabledEncryptionMethods} from '@/presentation/api/encryptionMethods';
+import {getAllEncryptionMethods} from '@/presentation/api/encryptionMethods';
 
 import {EncryptionMethodPanel} from './EncryptionMethodPanel';
 
@@ -28,14 +28,14 @@ export const List: Story = {
 export const Empty: Story = {
   name: 'Пустой',
   beforeEach() {
-    mocked(getEnabledEncryptionMethods).mockResolvedValue(Result.success([]));
+    mocked(getAllEncryptionMethods).mockResolvedValue(Result.success([]));
   },
 };
 
 export const Loading: Story = {
   name: 'Скелетон',
   beforeEach() {
-    mocked(getEnabledEncryptionMethods).mockImplementation(
+    mocked(getAllEncryptionMethods).mockImplementation(
       () => new Promise<Result<EncryptionMethod[]>>(() => {}),
     );
   },
@@ -44,7 +44,7 @@ export const Loading: Story = {
 export const Failed: Story = {
   name: 'Не загрузилось',
   beforeEach() {
-    mocked(getEnabledEncryptionMethods).mockResolvedValue(Result.error(new Error('down')));
+    mocked(getAllEncryptionMethods).mockResolvedValue(Result.error(new Error('down')));
 
     const originalSetTimeout = window.setTimeout;
 
