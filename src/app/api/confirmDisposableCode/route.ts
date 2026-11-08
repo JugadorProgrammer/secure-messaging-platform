@@ -1,4 +1,3 @@
-import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
 import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
@@ -9,18 +8,16 @@ import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
 export const POST = compose(
   castFromJson(disposableCodeSchema),
-  async (disposableCode: DisposableCode) => {
+  validateHasCookies(400),
+  async (request: DisposableCode & {cookie: string}) => {
     try {
-      const cookie = (await cookies()).toString();
-
-      if (cookie === '') {
-        return new Response(null, {status: 400});
-      }
-
-      const result = await appConfig.resolve('loginService').confirmDisposableCode(cookie, disposableCode);
+      const result = await appConfig
+        .resolve('loginService')
+        .confirmDisposableCode(request.cookie, request);
 
       if (!result.isSuccess) {
         console.error(result.error);

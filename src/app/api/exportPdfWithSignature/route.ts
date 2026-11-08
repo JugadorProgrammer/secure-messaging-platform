@@ -1,5 +1,3 @@
-import {cookies} from 'next/headers';
-
 import type {ExportPdfWithSignatureRequest} from '@/application/IMessageService/MessageService/ExportPdfWithSignatureRequest';
 
 import {appConfig} from '@/appconfig';
@@ -7,21 +5,17 @@ import {exportPdfWithSignatureRequestSchema} from '@/infrastructure/http/Message
 
 import {auth, compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
 export const POST = compose(
   auth(),
+  validateHasCookies(),
   castFromJson(exportPdfWithSignatureRequestSchema),
-  async (request: ExportPdfWithSignatureRequest) => {
+  async (request: ExportPdfWithSignatureRequest & {cookie: string}) => {
     try {
-      const cookie = (await cookies()).toString();
-
-      if (cookie === '') {
-        return new Response(null, {status: 401});
-      }
-
       const result = await appConfig
         .resolve('messageService')
-        .exportPdfWithSignature(cookie, request);
+        .exportPdfWithSignature(request.cookie, request);
 
       if (!result.isSuccess) {
         console.error(result.error);

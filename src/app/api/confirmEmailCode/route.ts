@@ -1,4 +1,3 @@
-import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
 import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
@@ -9,18 +8,16 @@ import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
 export const POST = compose(
   castFromJson(emailCodeSchema),
-  async (emailCode: EmailCode) => {
+  validateHasCookies(400),
+  async (request: EmailCode & {cookie: string}) => {
     try {
-      const cookie = (await cookies()).toString();
-
-      if (cookie === '') {
-        return new Response(null, {status: 400});
-      }
-
-      const result = await appConfig.resolve('loginService').confirmEmailCode(cookie, emailCode);
+      const result = await appConfig
+        .resolve('loginService')
+        .confirmEmailCode(request.cookie, request);
 
       if (!result.isSuccess) {
         console.error(result.error);

@@ -1,18 +1,11 @@
-import {cookies} from 'next/headers';
-
 import {appConfig} from '@/appconfig';
 
 import {auth, compose} from '@/presentation/access/auth';
+import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
-export const GET = compose(auth(), async function GET() {
+export const GET = compose(auth(), validateHasCookies(), async (request: {cookie: string}) => {
   try {
-    const cookie = (await cookies()).toString();
-
-    if (cookie === '') {
-      return new Response(null, {status: 401});
-    }
-
-    const result = await appConfig.resolve('messageService').getAllMessages(cookie);
+    const result = await appConfig.resolve('messageService').getAllMessages(request.cookie);
 
     if (!result.isSuccess) {
       console.error(result.error);

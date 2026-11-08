@@ -1,5 +1,3 @@
-import {cookies} from 'next/headers';
-
 import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 
 import {appConfig} from '@/appconfig';
@@ -7,19 +5,17 @@ import {decryptMessageRequestSchema} from '@/infrastructure/http/MessageService/
 
 import {auth, compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
 export const POST = compose(
   auth(),
+  validateHasCookies(),
   castFromJson(decryptMessageRequestSchema),
-  async (request: DecryptMessageRequest) => {
+  async (request: DecryptMessageRequest & {cookie: string}) => {
     try {
-      const cookie = (await cookies()).toString();
-
-      if (cookie === '') {
-        return new Response(null, {status: 401});
-      }
-
-      const result = await appConfig.resolve('messageService').decryptMessage(cookie, request);
+      const result = await appConfig
+        .resolve('messageService')
+        .decryptMessage(request.cookie, request);
 
       if (!result.isSuccess) {
         console.error(result.error);
