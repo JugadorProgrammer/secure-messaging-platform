@@ -1,12 +1,10 @@
 'use client';
 
-import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-
-import {restorePassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
-import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
+
+import {useRestorePasswordForm} from './useRestorePasswordForm';
 
 import styles from './RestorePasswordForm.module.css';
 
@@ -15,9 +13,7 @@ type RestorePasswordFormProps = {
 };
 
 export function RestorePasswordForm({onSuccess}: RestorePasswordFormProps) {
-  const [email, setEmail] = useState('');
-  const {notice, show, dismiss} = useScreenNotice();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {email, setEmail, isSubmitting, notice, submit} = useRestorePasswordForm({onSuccess});
 
   function handleEmailChange(event: ChangeEvent<HTMLInputElement>): void {
     setEmail(event.target.value);
@@ -25,19 +21,7 @@ export function RestorePasswordForm({onSuccess}: RestorePasswordFormProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setIsSubmitting(true);
-    dismiss();
-
-    const result = await restorePassword(email);
-
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      show(result.error.message);
-      return;
-    }
-
-    onSuccess(email);
+    await submit();
   }
 
   return (

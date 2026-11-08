@@ -1,12 +1,10 @@
 'use client';
 
-import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-
-import {confirmEmailCode} from '@/presentation/api/login';
 import {Notification} from '@/presentation/components/notification/Notification';
-import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
+
+import {useLoginEmailCodeForm} from './useLoginEmailCodeForm';
 
 import styles from './LoginEmailCodeForm.module.css';
 
@@ -15,9 +13,9 @@ type LoginEmailCodeFormProps = {
 };
 
 export function LoginEmailCodeForm({onSuccess}: LoginEmailCodeFormProps) {
-  const [emailCode, setEmailCode] = useState('');
-  const {notice, show, dismiss} = useScreenNotice();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {emailCode, setEmailCode, isSubmitting, notice, submit} = useLoginEmailCodeForm({
+    onSuccess,
+  });
 
   function handleEmailCodeChange(event: ChangeEvent<HTMLInputElement>): void {
     setEmailCode(event.target.value.replace(/\D/g, '').slice(0, 6));
@@ -25,19 +23,7 @@ export function LoginEmailCodeForm({onSuccess}: LoginEmailCodeFormProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setIsSubmitting(true);
-    dismiss();
-
-    const result = await confirmEmailCode(emailCode);
-
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      show(result.error.message);
-      return;
-    }
-
-    onSuccess();
+    await submit();
   }
 
   return (

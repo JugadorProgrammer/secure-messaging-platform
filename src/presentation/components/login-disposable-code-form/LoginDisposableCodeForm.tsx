@@ -1,12 +1,10 @@
 'use client';
 
-import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-
-import {confirmDisposableCode} from '@/presentation/api/login';
 import {Notification} from '@/presentation/components/notification/Notification';
-import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
+
+import {useLoginDisposableCodeForm} from './useLoginDisposableCodeForm';
 
 import styles from './LoginDisposableCodeForm.module.css';
 
@@ -15,9 +13,8 @@ type LoginDisposableCodeFormProps = {
 };
 
 export function LoginDisposableCodeForm({onSuccess}: LoginDisposableCodeFormProps) {
-  const [disposableCode, setDisposableCode] = useState('');
-  const {notice, show, dismiss} = useScreenNotice();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {disposableCode, setDisposableCode, isSubmitting, notice, submit} =
+    useLoginDisposableCodeForm({onSuccess});
 
   function handleDisposableCodeChange(event: ChangeEvent<HTMLInputElement>): void {
     setDisposableCode(event.target.value);
@@ -25,19 +22,7 @@ export function LoginDisposableCodeForm({onSuccess}: LoginDisposableCodeFormProp
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setIsSubmitting(true);
-    dismiss();
-
-    const result = await confirmDisposableCode(disposableCode);
-
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      show(result.error.message);
-      return;
-    }
-
-    onSuccess();
+    await submit();
   }
 
   return (
