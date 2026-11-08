@@ -27,3 +27,11 @@ export const Authorized: Story = {
     isAuthorized: true,
   },
 };
+
+export const Admin: Story = {
+  name: 'Администратор',
+  args: {
+    isAuthorized: true,
+    isAdmin: true,
+  },
+};
