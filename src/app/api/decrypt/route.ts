@@ -1,6 +1,6 @@
 import {cookies} from 'next/headers';
 
-import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
+import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 
 import {appConfig} from '@/appconfig';
 import {decryptMessageRequestSchema} from '@/infrastructure/http/messageSchema';
@@ -19,7 +19,7 @@ export const POST = compose(
         return new Response(null, {status: 401});
       }
 
-      const result = await appConfig.resolve('decryptMessageService').decryptMessage(cookie, request);
+      const result = await appConfig.resolve('messageService').decryptMessage(cookie, request);
 
       if (!result.isSuccess) {
         console.error(result.error);

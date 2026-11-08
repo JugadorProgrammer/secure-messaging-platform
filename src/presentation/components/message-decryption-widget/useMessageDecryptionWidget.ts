@@ -5,7 +5,7 @@ import {useEffect, useState} from 'react';
 import type {MessageEncryptionMethod} from '@/domain/message';
 import {MESSAGE_ENCRYPTION_METHODS} from '@/domain/message';
 
-import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
+import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 import {Result} from '@/application/Result';
 
 import {decryptMessage} from '@/presentation/api/decrypt';

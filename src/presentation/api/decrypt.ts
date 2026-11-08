@@ -1,5 +1,5 @@
-import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
-import type {DecryptMessageResult} from '@/application/DecryptMessageResult';
+import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
+import type {DecryptMessageResult} from '@/application/IMessageService/MessageService/DecryptMessageResult';
 
 import {Result} from '@/application/Result';
 

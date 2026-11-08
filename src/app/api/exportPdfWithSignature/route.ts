@@ -1,6 +1,6 @@
 import {cookies} from 'next/headers';
 
-import type {ExportPdfWithSignatureRequest} from '@/application/ExportPdfWithSignatureRequest';
+import type {ExportPdfWithSignatureRequest} from '@/application/IMessageService/MessageService/ExportPdfWithSignatureRequest';
 
 import {appConfig} from '@/appconfig';
 import {exportPdfWithSignatureRequestSchema} from '@/infrastructure/http/messageSchema';
@@ -20,7 +20,7 @@ export const POST = compose(
       }
 
       const result = await appConfig
-        .resolve('exportPdfWithSignatureService')
+        .resolve('messageService')
         .exportPdfWithSignature(cookie, request);
 
       if (!result.isSuccess) {

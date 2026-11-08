@@ -1,6 +1,6 @@
 import {cookies} from 'next/headers';
 
-import type {EncryptMessageRequest} from '@/application/EncryptMessageRequest';
+import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
 
 import {appConfig} from '@/appconfig';
 import {encryptMessageRequestSchema} from '@/infrastructure/http/messageSchema';
@@ -19,7 +19,7 @@ export const POST = compose(
         return new Response(null, {status: 401});
       }
 
-      const result = await appConfig.resolve('encryptMessageService').encryptMessage(cookie, request);
+      const result = await appConfig.resolve('messageService').encryptMessage(cookie, request);
 
       if (!result.isSuccess) {
         console.error(result.error);

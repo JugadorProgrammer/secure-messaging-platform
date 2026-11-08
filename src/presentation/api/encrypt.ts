@@ -1,5 +1,5 @@
 import type {Message} from '@/domain/message';
-import type {EncryptMessageRequest} from '@/application/EncryptMessageRequest';
+import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
 
 import {Result} from '@/application/Result';
 

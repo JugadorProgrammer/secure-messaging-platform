@@ -1,5 +1,5 @@
-import type {ExportPdfWithSignatureRequest} from '@/application/ExportPdfWithSignatureRequest';
-import type {SignedPdfDocument} from '@/application/SignedPdfDocument';
+import type {ExportPdfWithSignatureRequest} from '@/application/IMessageService/MessageService/ExportPdfWithSignatureRequest';
+import type {SignedPdfDocument} from '@/application/IMessageService/MessageService/SignedPdfDocument';
 
 import {Result} from '@/application/Result';
 

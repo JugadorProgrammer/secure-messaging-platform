@@ -3,8 +3,8 @@
 import {useState} from 'react';
 
 import type {Message} from '@/domain/message';
-import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
-import type {SignedPdfDocument} from '@/application/SignedPdfDocument';
+import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
+import type {SignedPdfDocument} from '@/application/IMessageService/MessageService/SignedPdfDocument';
 
 import {decryptMessage} from '@/presentation/api/decrypt';
 import {exportPdfWithSignature} from '@/presentation/api/exportPdfWithSignature';
