@@ -3,7 +3,6 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-import {Result} from '@/application/Result';
 
 import {confirmNewPassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
@@ -35,7 +34,7 @@ export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 

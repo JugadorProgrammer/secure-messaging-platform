@@ -22,8 +22,4 @@ export const Result = {
       error,
     };
   },
-
-  message(result: {error: Error}): string {
-    return result.error.message;
-  },
 };

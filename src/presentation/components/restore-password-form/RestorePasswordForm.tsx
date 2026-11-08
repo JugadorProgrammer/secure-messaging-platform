@@ -3,7 +3,6 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-import {Result} from '@/application/Result';
 
 import {restorePassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
@@ -34,7 +33,7 @@ export function RestorePasswordForm({onSuccess}: RestorePasswordFormProps) {
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 

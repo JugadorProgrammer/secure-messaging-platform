@@ -3,7 +3,6 @@
 import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-import {Result} from '@/application/Result';
 
 import {emailPattern, loginPattern, passwordPattern} from '@/infrastructure/http/signupSchema';
 import {signup} from '@/presentation/api/signup';
@@ -86,7 +85,7 @@ export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentials
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 

@@ -89,7 +89,7 @@ export function useMessageEncryptionWidget({
     const validation = validate();
 
     if (!validation.isSuccess) {
-      show(Result.message(validation));
+      show(validation.error.message);
       return;
     }
 
@@ -101,7 +101,7 @@ export function useMessageEncryptionWidget({
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 
