@@ -34,6 +34,28 @@
   font-size: 0.75rem;
 }
 
+.message-widget__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.message-widget__check {
+  padding: 0.375rem 0.75rem;
+  border: 0;
+  border-radius: 0.375rem;
+  color: var(--white);
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  background: var(--black-700);
+}
+
+.message-widget__check:disabled {
+  background: var(--gray-600);
+  cursor: default;
+}
+
 .message-widget__content {
   display: flex;
   flex-direction: column;
