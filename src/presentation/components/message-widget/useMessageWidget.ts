@@ -2,7 +2,9 @@
 
 import {useState} from 'react';
 
-import type {DecryptMessageRequest, Message, SignedPdfDocument} from '@/domain/message';
+import type {Message} from '@/domain/message';
+import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
+import type {SignedPdfDocument} from '@/application/SignedPdfDocument';
 
 import {decryptMessage} from '@/presentation/api/decrypt';
 import {exportPdfWithSignature} from '@/presentation/api/exportPdfWithSignature';

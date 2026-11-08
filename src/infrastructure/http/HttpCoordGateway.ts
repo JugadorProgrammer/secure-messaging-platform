@@ -1,18 +1,16 @@
 import {z} from 'zod';
 
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
-import type {
-  EncryptMessageRequest,
-  DecryptMessageRequest,
-  DecryptMessageResult,
-  ExportPdfWithSignatureRequest,
-  Message,
-  SignedPdfDocument,
-} from '@/domain/message';
+import type {Message} from '@/domain/message';
 import type {Role} from '@/domain/role';
 
+import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
+import type {DecryptMessageResult} from '@/application/DecryptMessageResult';
+import type {EncryptMessageRequest} from '@/application/EncryptMessageRequest';
+import type {ExportPdfWithSignatureRequest} from '@/application/ExportPdfWithSignatureRequest';
 import type {ICoordGateway} from '@/application/ICoordGateway';
 import {Result} from '@/application/Result';
+import type {SignedPdfDocument} from '@/application/SignedPdfDocument';
 
 import {castResponse} from './castResponse';
 import {encryptionMethodSchema} from './encryptionMethodSchema';

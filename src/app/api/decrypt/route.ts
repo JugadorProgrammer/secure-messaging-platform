@@ -1,6 +1,6 @@
 import {cookies} from 'next/headers';
 
-import type {DecryptMessageRequest} from '@/domain/message';
+import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
 
 import {appConfig} from '@/appconfig';
 import {decryptMessageRequestSchema} from '@/infrastructure/http/messageSchema';

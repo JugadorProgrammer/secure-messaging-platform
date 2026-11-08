@@ -1,6 +1,6 @@
 import {cookies} from 'next/headers';
 
-import type {EncryptMessageRequest} from '@/domain/message';
+import type {EncryptMessageRequest} from '@/application/EncryptMessageRequest';
 
 import {appConfig} from '@/appconfig';
 import {encryptMessageRequestSchema} from '@/infrastructure/http/messageSchema';

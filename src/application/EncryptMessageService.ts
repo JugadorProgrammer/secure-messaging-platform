@@ -1,4 +1,5 @@
-import type {EncryptMessageRequest, Message} from '@/domain/message';
+import type {Message} from '@/domain/message';
+import type {EncryptMessageRequest} from '@/application/EncryptMessageRequest';
 
 import type {ICoordGateway} from '@/application/ICoordGateway';
 import type {Result} from '@/application/Result';

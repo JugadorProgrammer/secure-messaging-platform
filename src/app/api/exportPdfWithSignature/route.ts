@@ -1,6 +1,6 @@
 import {cookies} from 'next/headers';
 
-import type {ExportPdfWithSignatureRequest} from '@/domain/message';
+import type {ExportPdfWithSignatureRequest} from '@/application/ExportPdfWithSignatureRequest';
 
 import {appConfig} from '@/appconfig';
 import {exportPdfWithSignatureRequestSchema} from '@/infrastructure/http/messageSchema';

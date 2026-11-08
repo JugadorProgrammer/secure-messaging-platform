@@ -1,4 +1,5 @@
-import type {DecryptMessageRequest, DecryptMessageResult} from '@/domain/message';
+import type {DecryptMessageRequest} from '@/application/DecryptMessageRequest';
+import type {DecryptMessageResult} from '@/application/DecryptMessageResult';
 
 import type {ICoordGateway} from '@/application/ICoordGateway';
 import type {Result} from '@/application/Result';
