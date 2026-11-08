@@ -2,6 +2,7 @@ import {z} from 'zod';
 
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {EncryptMessageRequest, Message} from '@/domain/message';
+import type {DecryptMessageRequest, DecryptMessageResult} from '@/domain/message';
 import type {Role} from '@/domain/role';
 
 import type {ICoordGateway} from '@/application/ICoordGateway';
@@ -9,8 +10,9 @@ import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
 import {encryptionMethodSchema} from './encryptionMethodSchema';
-import {HttpRequestBuilder} from './HttpRequestBuilder';
 import {messageSchema} from './messageSchema';
+import {HttpRequestBuilder} from './HttpRequestBuilder';
+import {decryptMessageResultSchema} from './messageSchema';
 import {roleSchema} from './roleSchema';
 
 type HttpCoordGatewayDependencies = {
@@ -20,6 +22,7 @@ type HttpCoordGatewayDependencies = {
 const ROLES_PATH = '/api/roles';
 const ENABLED_ENCRYPTION_METHODS_PATH = '/getEnabledEncryptionMethods';
 const ENCRYPT_PATH = '/encrypt';
+const DECRYPT_PATH = '/decrypt';
 
 export class HttpCoordGateway implements ICoordGateway {
   private readonly coordUrl: string;
@@ -58,6 +61,23 @@ export class HttpCoordGateway implements ICoordGateway {
       );
 
       return await castResponse(response, messageSchema);
+    } catch (error) {
+      console.error(error);
+      return Result.error(new Error('Ответ не получен'));
+    }
+  }
+
+  async decryptMessage(
+    cookie: string,
+    request: DecryptMessageRequest,
+  ): Promise<Result<DecryptMessageResult>> {
+    try {
+      const response = await fetch(
+        `${this.coordUrl}${DECRYPT_PATH}`,
+        new HttpRequestBuilder().post().cookie(cookie).json(request).build(),
+      );
+
+      return await castResponse(response, decryptMessageResultSchema);
     } catch (error) {
       console.error(error);
       return Result.error(new Error('Ответ не получен'));

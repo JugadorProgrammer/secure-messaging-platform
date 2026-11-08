@@ -2,35 +2,55 @@ export const MESSAGE_ENCRYPTION_METHODS = ['RSA-32768', 'Кузнечик'] as c
 
 export type MessageEncryptionMethod = (typeof MESSAGE_ENCRYPTION_METHODS)[number];
 
-export type RsaKeys = {
-  publicKey: string;
+type DecryptMessageRequestBase = {
+  ciphertext: string;
+};
+
+export type DecryptRsaRequest = DecryptMessageRequestBase & {
+  method: 'RSA-32768';
   privateKey: string;
 };
 
-export type KuznyechikKeys = {
+export type DecryptKuznyechikRequest = DecryptMessageRequestBase & {
+  method: 'Кузнечик';
   key: string;
-  iv: string;
+};
+
+export type DecryptMessageRequest = DecryptRsaRequest | DecryptKuznyechikRequest;
+
+export type DecryptMessageResult = {
+  plaintext: string;
+};
+
+export type RsaKeys = {
+    publicKey: string;
+    privateKey: string;
+};
+
+export type KuznyechikKeys = {
+    key: string;
+    iv: string;
 };
 
 type MessageBase = {
-  plaintext: string;
-  ciphertext: string;
-  timestamp: string;
+    plaintext: string;
+    ciphertext: string;
+    timestamp: string;
 };
 
 export type RsaMessage = MessageBase & {
-  method: 'RSA-32768';
-  keys: RsaKeys;
+    method: 'RSA-32768';
+    keys: RsaKeys;
 };
 
 export type KuznyechikMessage = MessageBase & {
-  method: 'Кузнечик';
-  keys: KuznyechikKeys;
+    method: 'Кузнечик';
+    keys: KuznyechikKeys;
 };
 
 export type Message = RsaMessage | KuznyechikMessage;
 
 export type EncryptMessageRequest = {
-  plaintext: string;
-  method: MessageEncryptionMethod;
+    plaintext: string;
+    method: MessageEncryptionMethod;
 };
