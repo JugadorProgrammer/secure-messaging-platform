@@ -8,7 +8,7 @@ import {Result} from '@/application/Result';
 
 import {GET as getEncryptionMethods} from '@/app/api/encryption-methods/route';
 import {castResponse} from '@/infrastructure/http/castResponse';
-import {encryptionMethodSchema} from '@/infrastructure/http/encryptionMethodSchema';
+import {encryptionMethodSchema} from '@/infrastructure/http/EncryptionMethodService/encryptionMethodSchema';
 
 export async function getEnabledEncryptionMethods(): Promise<Result<EncryptionMethod[]>> {
   try {

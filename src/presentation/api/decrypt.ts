@@ -4,7 +4,7 @@ import type {DecryptMessageResult} from '@/application/IMessageService/MessageSe
 import {Result} from '@/application/Result';
 
 import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
-import {decryptMessageResultSchema} from '@/infrastructure/http/messageSchema';
+import {decryptMessageResultSchema} from '@/infrastructure/http/MessageService/messageSchema';
 
 const DECRYPT_PATH = '/api/decrypt';
 

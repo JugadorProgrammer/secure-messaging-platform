@@ -4,7 +4,7 @@ import type {EncryptMessageRequest} from '@/application/IMessageService/MessageS
 import {Result} from '@/application/Result';
 
 import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
-import {messageSchema} from '@/infrastructure/http/messageSchema';
+import {messageSchema} from '@/infrastructure/http/MessageService/messageSchema';
 
 const ENCRYPT_PATH = '/api/encrypt';
 

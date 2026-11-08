@@ -8,7 +8,7 @@ import {Result} from '@/application/Result';
 
 import {GET as getRolesResponse} from '@/app/api/roles/route';
 import {castResponse} from '@/infrastructure/http/castResponse';
-import {roleSchema} from '@/infrastructure/http/roleSchema';
+import {roleSchema} from '@/infrastructure/http/RoleService/roleSchema';
 
 export async function getRoles(): Promise<Result<Role[]>> {
   try {

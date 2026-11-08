@@ -3,7 +3,7 @@ import {cookies} from 'next/headers';
 import type {ExportPdfWithSignatureRequest} from '@/application/IMessageService/MessageService/ExportPdfWithSignatureRequest';
 
 import {appConfig} from '@/appconfig';
-import {exportPdfWithSignatureRequestSchema} from '@/infrastructure/http/messageSchema';
+import {exportPdfWithSignatureRequestSchema} from '@/infrastructure/http/MessageService/messageSchema';
 
 import {auth, compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';

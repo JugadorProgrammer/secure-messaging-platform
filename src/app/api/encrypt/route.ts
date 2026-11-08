@@ -3,7 +3,7 @@ import {cookies} from 'next/headers';
 import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
 
 import {appConfig} from '@/appconfig';
-import {encryptMessageRequestSchema} from '@/infrastructure/http/messageSchema';
+import {encryptMessageRequestSchema} from '@/infrastructure/http/MessageService/messageSchema';
 
 import {auth, compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';

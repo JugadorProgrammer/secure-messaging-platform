@@ -5,7 +5,7 @@ import type {Message} from '@/domain/message';
 import {Result} from '@/application/Result';
 
 import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
-import {messageSchema} from '@/infrastructure/http/messageSchema';
+import {messageSchema} from '@/infrastructure/http/MessageService/messageSchema';
 
 const MESSAGES_PATH = '/api/messages';
 
