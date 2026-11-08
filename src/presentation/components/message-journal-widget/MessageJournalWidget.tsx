@@ -1,5 +1,6 @@
 'use client';
 
+import {MessageWidget} from '@/presentation/components/message-widget/MessageWidget';
 import {Notification} from '@/presentation/components/notification/Notification';
 
 import {useMessageJournalWidget} from './useMessageJournalWidget';
@@ -29,7 +30,14 @@ export function MessageJournalWidget() {
         <div className={styles['message-journal-widget__messages']}>
           {messages.length === 0 ? (
             <p className={styles['message-journal-widget__empty']}>Сообщений нет</p>
-          ) : null}
+          ) : (
+            messages.map((message) => (
+              <MessageWidget
+                key={`${message.method}-${message.timestamp}-${message.ciphertext}`}
+                message={message}
+              />
+            ))
+          )}
         </div>
       ) : null}
     </div>

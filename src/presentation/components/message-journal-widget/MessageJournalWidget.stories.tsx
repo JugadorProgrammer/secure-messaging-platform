@@ -31,6 +31,20 @@ export const WithMessages: Story = {
           plaintext: 'Секретное сообщение',
           ciphertext: 'ciphertext-rsa',
           timestamp: '2026-11-08T12:00:00.000Z',
+          keys: {
+            publicKey: '-----BEGIN PUBLIC KEY-----\nPUBLIC\n-----END PUBLIC KEY-----',
+            privateKey: '-----BEGIN RSA PRIVATE KEY-----\nPRIVATE\n-----END RSA PRIVATE KEY-----',
+          },
+        },
+        {
+          method: 'Кузнечик',
+          plaintext: 'Другое сообщение',
+          ciphertext: 'ciphertext-kuznyechik',
+          timestamp: '2026-11-08T12:05:00.000Z',
+          keys: {
+            key: '00112233445566778899aabbccddeeff',
+            iv: 'ffeeddccbbaa99887766554433221100',
+          },
         },
       ]),
     );
