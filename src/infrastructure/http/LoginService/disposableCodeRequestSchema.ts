@@ -1,5 +1,5 @@
 import {z} from 'zod';
 
-export const disposableCodeSchema = z.object({
+export const disposableCodeRequestSchema = z.object({
   code: z.string().refine((value) => value.trim() !== ''),
 });

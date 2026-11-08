@@ -1,10 +1,10 @@
 import {NextResponse} from 'next/server';
 
-import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import {RESTORE_PASSWORD_COOKIE} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/PasswordRecoveryService';
 
 import {appConfig} from '@/appconfig';
-import {restoreCodeSchema} from '@/infrastructure/http/PasswordRecoveryService/restoreCodeSchema';
+import {restoreCodeRequestSchema} from '@/infrastructure/http/PasswordRecoveryService/restoreCodeRequestSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
@@ -12,11 +12,11 @@ import {castFromJson} from '@/presentation/access/castFromJson';
 import {handleErrors} from '@/presentation/access/handleErrors';
 
 export const POST = compose(
-  castFromJson(restoreCodeSchema),
-  handleErrors(async (restoreCode: RestoreCode) => {
+  castFromJson(restoreCodeRequestSchema),
+  handleErrors(async (restoreCodeRequest: RestoreCodeRequest) => {
     const result = await appConfig
       .resolve('passwordRecoveryService')
-      .confirmRestoreCode(restoreCode);
+      .confirmRestoreCode(restoreCodeRequest);
 
     if (!result.isSuccess) {
       console.error(result.error);

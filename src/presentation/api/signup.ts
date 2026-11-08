@@ -1,4 +1,4 @@
-import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
+import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
 import {Result} from '@/application/Result';
 
 import {HttpRequestBuilder} from '@/infrastructure/http/HttpRequestBuilder';
@@ -6,11 +6,11 @@ import {recoveryCodesSchema} from '@/infrastructure/http/RegistrationService/rec
 
 const SIGNUP_PATH = '/api/signup';
 
-export async function signup(registration: Registration): Promise<Result<string[]>> {
+export async function signup(registrationRequest: RegistrationRequest): Promise<Result<string[]>> {
   try {
     const response = await fetch(
       SIGNUP_PATH,
-      new HttpRequestBuilder().post().json(registration).build(),
+      new HttpRequestBuilder().post().json(registrationRequest).build(),
     );
 
     if (!response.ok) {

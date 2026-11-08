@@ -1,19 +1,19 @@
 import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
-import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
+import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPasswordRequest';
 import {RESTORE_PASSWORD_COOKIE} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/PasswordRecoveryService';
 
 import {appConfig} from '@/appconfig';
-import {newPasswordSchema} from '@/infrastructure/http/PasswordRecoveryService/newPasswordSchema';
+import {newPasswordRequestSchema} from '@/infrastructure/http/PasswordRecoveryService/newPasswordRequestSchema';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
 import {handleErrors} from '@/presentation/access/handleErrors';
 
 export const POST = compose(
-  castFromJson(newPasswordSchema),
-  handleErrors(async (newPassword: NewPassword) => {
+  castFromJson(newPasswordRequestSchema),
+  handleErrors(async (newPasswordRequest: NewPasswordRequest) => {
     const cookieStore = await cookies();
 
     if (!cookieStore.get(RESTORE_PASSWORD_COOKIE)?.value) {
@@ -22,7 +22,7 @@ export const POST = compose(
 
     const result = await appConfig
       .resolve('passwordRecoveryService')
-      .confirmNewPassword(cookieStore.toString(), newPassword);
+      .confirmNewPassword(cookieStore.toString(), newPasswordRequest);
 
     if (!result.isSuccess) {
       console.error(result.error);

@@ -4,7 +4,7 @@ import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
 
-import {emailPattern, loginPattern, passwordPattern} from '@/infrastructure/http/RegistrationService/signupSchema';
+import {emailPattern, loginPattern, passwordPattern} from '@/infrastructure/http/RegistrationService/registrationRequestSchema';
 import {signup} from '@/presentation/api/signup';
 import {Notification} from '@/presentation/components/notification/Notification';
 import {useScreenNotice} from '@/presentation/notice/useScreenNotice';

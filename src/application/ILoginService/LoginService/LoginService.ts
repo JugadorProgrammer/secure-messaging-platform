@@ -1,8 +1,8 @@
 import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
 import type {ILoginService} from '@/application/ILoginService/ILoginService';
-import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
-import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
-import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
+import type {DisposableCodeRequest} from '@/application/ILoginService/LoginService/DisposableCodeRequest';
+import type {EmailCodeRequest} from '@/application/ILoginService/LoginService/EmailCodeRequest';
+import type {LoginCredentialsRequest} from '@/application/ILoginService/LoginService/LoginCredentialsRequest';
 import type {Result} from '@/application/Result';
 
 type LoginServiceDependencies = {
@@ -16,18 +16,21 @@ export class LoginService implements ILoginService {
     this.authGateway = authGateway;
   }
 
-  login(credentials: LoginCredentials): Promise<Result<readonly string[]>> {
-    return this.authGateway.login(credentials);
+  login(loginCredentialsRequest: LoginCredentialsRequest): Promise<Result<readonly string[]>> {
+    return this.authGateway.login(loginCredentialsRequest);
   }
 
-  confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>> {
-    return this.authGateway.confirmEmailCode(cookie, emailCode);
+  confirmEmailCode(
+    cookie: string,
+    emailCodeRequest: EmailCodeRequest,
+  ): Promise<Result<readonly string[]>> {
+    return this.authGateway.confirmEmailCode(cookie, emailCodeRequest);
   }
 
   confirmDisposableCode(
     cookie: string,
-    disposableCode: DisposableCode,
+    disposableCodeRequest: DisposableCodeRequest,
   ): Promise<Result<readonly string[]>> {
-    return this.authGateway.confirmDisposableCode(cookie, disposableCode);
+    return this.authGateway.confirmDisposableCode(cookie, disposableCodeRequest);
   }
 }

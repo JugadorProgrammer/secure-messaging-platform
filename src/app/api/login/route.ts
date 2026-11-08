@@ -1,9 +1,9 @@
 import {NextResponse} from 'next/server';
 
-import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
+import type {LoginCredentialsRequest} from '@/application/ILoginService/LoginService/LoginCredentialsRequest';
 
 import {appConfig} from '@/appconfig';
-import {loginCredentialsSchema} from '@/infrastructure/http/LoginService/loginCredentialsSchema';
+import {loginCredentialsRequestSchema} from '@/infrastructure/http/LoginService/loginCredentialsRequestSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
@@ -11,9 +11,9 @@ import {castFromJson} from '@/presentation/access/castFromJson';
 import {handleErrors} from '@/presentation/access/handleErrors';
 
 export const POST = compose(
-  castFromJson(loginCredentialsSchema),
-  handleErrors(async (credentials: LoginCredentials) => {
-    const result = await appConfig.resolve('loginService').login(credentials);
+  castFromJson(loginCredentialsRequestSchema),
+  handleErrors(async (loginCredentialsRequest: LoginCredentialsRequest) => {
+    const result = await appConfig.resolve('loginService').login(loginCredentialsRequest);
 
     if (!result.isSuccess) {
       console.error(result.error);

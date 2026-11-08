@@ -1,5 +1,5 @@
 import {z} from 'zod';
 
-export const emailCodeSchema = z.object({
+export const emailCodeRequestSchema = z.object({
   code: z.string().regex(/^\d{6}$/),
 });

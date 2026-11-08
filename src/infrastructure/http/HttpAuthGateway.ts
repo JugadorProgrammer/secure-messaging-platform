@@ -1,11 +1,11 @@
 import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
-import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
-import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
-import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
-import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
-import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import type {DisposableCodeRequest} from '@/application/ILoginService/LoginService/DisposableCodeRequest';
+import type {EmailCodeRequest} from '@/application/ILoginService/LoginService/EmailCodeRequest';
+import type {LoginCredentialsRequest} from '@/application/ILoginService/LoginService/LoginCredentialsRequest';
+import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPasswordRequest';
+import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
-import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
+import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
@@ -32,22 +32,25 @@ export class HttpAuthGateway implements IAuthGateway {
     this.authUrl = authUrl;
   }
 
-  login(credentials: LoginCredentials): Promise<Result<readonly string[]>> {
+  login(loginCredentialsRequest: LoginCredentialsRequest): Promise<Result<readonly string[]>> {
     return requestSetCookies(() =>
       fetch(
         `${this.authUrl}${LOGIN_PATH}`,
         new HttpRequestBuilder()
           .post()
           .json({
-            login: credentials.login,
-            password: credentials.password,
+            login: loginCredentialsRequest.login,
+            password: loginCredentialsRequest.password,
           })
           .build(),
       ),
     );
   }
 
-  confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>> {
+  confirmEmailCode(
+    cookie: string,
+    emailCodeRequest: EmailCodeRequest,
+  ): Promise<Result<readonly string[]>> {
     return requestSetCookies(() =>
       fetch(
         `${this.authUrl}${CONFIRM_EMAIL_CODE_PATH}`,
@@ -55,14 +58,17 @@ export class HttpAuthGateway implements IAuthGateway {
           .post()
           .cookie(cookie)
           .json({
-            code: emailCode.code,
+            code: emailCodeRequest.code,
           })
           .build(),
       ),
     );
   }
 
-  confirmDisposableCode(cookie: string, disposableCode: DisposableCode): Promise<Result<readonly string[]>> {
+  confirmDisposableCode(
+    cookie: string,
+    disposableCodeRequest: DisposableCodeRequest,
+  ): Promise<Result<readonly string[]>> {
     return requestSetCookies(() =>
       fetch(
         `${this.authUrl}${CONFIRM_DISPOSABLE_CODE_PATH}`,
@@ -70,7 +76,7 @@ export class HttpAuthGateway implements IAuthGateway {
           .post()
           .cookie(cookie)
           .json({
-            code: disposableCode.code,
+            code: disposableCodeRequest.code,
           })
           .build(),
       ),
@@ -91,21 +97,24 @@ export class HttpAuthGateway implements IAuthGateway {
     );
   }
 
-  confirmRestoreCode(restoreCode: RestoreCode): Promise<Result<readonly string[]>> {
+  confirmRestoreCode(restoreCodeRequest: RestoreCodeRequest): Promise<Result<readonly string[]>> {
     return requestSetCookies(() =>
       fetch(
         `${this.authUrl}${CONFIRM_RESTORE_CODE_PATH}`,
         new HttpRequestBuilder()
           .post()
           .json({
-            code: restoreCode.code,
+            code: restoreCodeRequest.code,
           })
           .build(),
       ),
     );
   }
 
-  confirmNewPassword(cookie: string, newPassword: NewPassword): Promise<Result<readonly string[]>> {
+  confirmNewPassword(
+    cookie: string,
+    newPasswordRequest: NewPasswordRequest,
+  ): Promise<Result<readonly string[]>> {
     return requestSetCookies(() =>
       fetch(
         `${this.authUrl}${CONFIRM_NEW_PASSWORD_PATH}`,
@@ -113,18 +122,18 @@ export class HttpAuthGateway implements IAuthGateway {
           .post()
           .cookie(cookie)
           .json({
-            password: newPassword.password,
+            password: newPasswordRequest.password,
           })
           .build(),
       ),
     );
   }
 
-  async signup(registration: Registration): Promise<Result<string[]>> {
+  async signup(registrationRequest: RegistrationRequest): Promise<Result<string[]>> {
     try {
       const response = await fetch(
         `${this.authUrl}${SIGNUP_PATH}`,
-        new HttpRequestBuilder().post().json(registration).build(),
+        new HttpRequestBuilder().post().json(registrationRequest).build(),
       );
 
       return await castResponse(response, recoveryCodesSchema);

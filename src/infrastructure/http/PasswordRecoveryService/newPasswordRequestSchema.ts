@@ -1,5 +1,5 @@
 import {z} from 'zod';
 
-export const newPasswordSchema = z.object({
+export const newPasswordRequestSchema = z.object({
   password: z.string().refine((value) => value.trim() !== ''),
 });

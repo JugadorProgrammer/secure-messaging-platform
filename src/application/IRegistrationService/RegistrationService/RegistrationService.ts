@@ -1,6 +1,6 @@
 import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
 import type {IRegistrationService} from '@/application/IRegistrationService/IRegistrationService';
-import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
+import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
 import type {Result} from '@/application/Result';
 
 type RegistrationServiceDependencies = {
@@ -14,7 +14,7 @@ export class RegistrationService implements IRegistrationService {
     this.authGateway = authGateway;
   }
 
-  signup(registration: Registration): Promise<Result<string[]>> {
-    return this.authGateway.signup(registration);
+  signup(registrationRequest: RegistrationRequest): Promise<Result<string[]>> {
+    return this.authGateway.signup(registrationRequest);
   }
 }

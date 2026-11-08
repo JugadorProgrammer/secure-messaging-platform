@@ -1,21 +1,27 @@
-import type {DisposableCode} from '@/application/ILoginService/LoginService/DisposableCode';
-import type {EmailCode} from '@/application/ILoginService/LoginService/EmailCode';
-import type {LoginCredentials} from '@/application/ILoginService/LoginService/LoginCredentials';
-import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
-import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import type {DisposableCodeRequest} from '@/application/ILoginService/LoginService/DisposableCodeRequest';
+import type {EmailCodeRequest} from '@/application/ILoginService/LoginService/EmailCodeRequest';
+import type {LoginCredentialsRequest} from '@/application/ILoginService/LoginService/LoginCredentialsRequest';
+import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPasswordRequest';
+import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
-import type {Registration} from '@/application/IRegistrationService/RegistrationService/Registration';
+import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
 import type {Result} from '@/application/Result';
 
 export interface IAuthGateway {
-  login(credentials: LoginCredentials): Promise<Result<readonly string[]>>;
-  confirmEmailCode(cookie: string, emailCode: EmailCode): Promise<Result<readonly string[]>>;
+  login(loginCredentialsRequest: LoginCredentialsRequest): Promise<Result<readonly string[]>>;
+  confirmEmailCode(
+    cookie: string,
+    emailCodeRequest: EmailCodeRequest,
+  ): Promise<Result<readonly string[]>>;
   confirmDisposableCode(
     cookie: string,
-    disposableCode: DisposableCode,
+    disposableCodeRequest: DisposableCodeRequest,
   ): Promise<Result<readonly string[]>>;
   restorePassword(restorePasswordRequest: RestorePasswordRequest): Promise<Result<void>>;
-  confirmRestoreCode(restoreCode: RestoreCode): Promise<Result<readonly string[]>>;
-  confirmNewPassword(cookie: string, newPassword: NewPassword): Promise<Result<readonly string[]>>;
-  signup(registration: Registration): Promise<Result<string[]>>;
+  confirmRestoreCode(restoreCodeRequest: RestoreCodeRequest): Promise<Result<readonly string[]>>;
+  confirmNewPassword(
+    cookie: string,
+    newPasswordRequest: NewPasswordRequest,
+  ): Promise<Result<readonly string[]>>;
+  signup(registrationRequest: RegistrationRequest): Promise<Result<string[]>>;
 }

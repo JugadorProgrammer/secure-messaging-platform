@@ -1,7 +1,7 @@
 import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
 import type {IPasswordRecoveryService} from '@/application/IPasswordRecoveryService/IPasswordRecoveryService';
-import type {NewPassword} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPassword';
-import type {RestoreCode} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCode';
+import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/NewPasswordRequest';
+import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
 import type {Result} from '@/application/Result';
 
@@ -22,11 +22,14 @@ export class PasswordRecoveryService implements IPasswordRecoveryService {
     return this.authGateway.restorePassword(restorePasswordRequest);
   }
 
-  confirmRestoreCode(restoreCode: RestoreCode): Promise<Result<readonly string[]>> {
-    return this.authGateway.confirmRestoreCode(restoreCode);
+  confirmRestoreCode(restoreCodeRequest: RestoreCodeRequest): Promise<Result<readonly string[]>> {
+    return this.authGateway.confirmRestoreCode(restoreCodeRequest);
   }
 
-  confirmNewPassword(cookie: string, newPassword: NewPassword): Promise<Result<readonly string[]>> {
-    return this.authGateway.confirmNewPassword(cookie, newPassword);
+  confirmNewPassword(
+    cookie: string,
+    newPasswordRequest: NewPasswordRequest,
+  ): Promise<Result<readonly string[]>> {
+    return this.authGateway.confirmNewPassword(cookie, newPasswordRequest);
   }
 }
