@@ -45,10 +45,10 @@ export function MessageEncryptionWidget({onEncrypted}: MessageEncryptionWidgetPr
   return (
     <form className={styles['message-encryption-widget']} onSubmit={handleSubmit}>
       <h2 className={styles['message-encryption-widget__title']}>Шифрование сообщения</h2>
-      <label className={styles['message-encryption-widget__field']}>
+      <label className={styles['message-encryption-widget__textarea-field']}>
         <span className={styles['message-encryption-widget__label']}>Исходный текст</span>
         <textarea
-          className={styles['message-encryption-widget__input']}
+          className={styles['message-encryption-widget__textarea']}
           name="plaintext"
           value={plaintext}
           onChange={handlePlaintextChange}
