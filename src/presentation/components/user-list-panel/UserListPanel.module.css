@@ -1,0 +1,30 @@
+.user-list-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-list-panel__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.user-list-panel__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.user-list-panel__bar {
+  display: block;
+  height: 4.5rem;
+  background: var(--gray-200);
+  border-radius: 0.5rem;
+}
+
+.user-list-panel__failed {
+  background: var(--gray-300);
+  border-radius: 0.5rem;
+  min-height: 4.5rem;
+}

@@ -5,6 +5,7 @@ import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/Pa
 import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
 import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
+import type {UserDto} from '@/application/IUserService/UserService/UserDto';
 import type {Result} from '@/application/Result';
 
 export interface IAuthGateway {
@@ -24,4 +25,5 @@ export interface IAuthGateway {
     newPasswordRequest: NewPasswordRequest,
   ): Promise<Result<readonly string[]>>;
   signup(registrationRequest: RegistrationRequest): Promise<Result<string[]>>;
+  getUsers(cookie: string): Promise<Result<UserDto[]>>;
 }

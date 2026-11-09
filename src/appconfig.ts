@@ -8,6 +8,7 @@ import {MessageService} from '@/application/IMessageService/MessageService/Messa
 import {PasswordRecoveryService} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/PasswordRecoveryService';
 import {RegistrationService} from '@/application/IRegistrationService/RegistrationService/RegistrationService';
 import {RoleService} from '@/application/IRoleService/RoleService/RoleService';
+import {UserService} from '@/application/IUserService/UserService/UserService';
 import {HttpAuthGateway} from '@/infrastructure/http/HttpAuthGateway';
 import {HttpCoordGateway} from '@/infrastructure/http/HttpCoordGateway';
 
@@ -24,6 +25,7 @@ export const appConfig = createContainer({
   loginService: asClass(LoginService).singleton(),
   passwordRecoveryService: asClass(PasswordRecoveryService).singleton(),
   registrationService: asClass(RegistrationService).singleton(),
+  userService: asClass(UserService).singleton(),
 });
 
 function readCoordUrl(): string {

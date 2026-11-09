@@ -1,3 +1,5 @@
+import {z} from 'zod';
+
 import type {IAuthGateway} from '@/application/IAuthGateway/IAuthGateway';
 import type {DisposableCodeRequest} from '@/application/ILoginService/LoginService/DisposableCodeRequest';
 import type {EmailCodeRequest} from '@/application/ILoginService/LoginService/EmailCodeRequest';
@@ -6,12 +8,14 @@ import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/Pa
 import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
 import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
+import type {UserDto} from '@/application/IUserService/UserService/UserDto';
 import {Result} from '@/application/Result';
 
 import {castResponse} from './castResponse';
 import {HttpRequestBuilder} from './HttpRequestBuilder';
 import {readSetCookies} from './setCookies';
 import {recoveryCodesSchema} from './RegistrationService/recoveryCodesSchema';
+import {userDtoSchema} from './UserService/userDtoSchema';
 
 type HttpAuthGatewayDependencies = {
   authUrl: string;
@@ -24,6 +28,7 @@ const RESTORE_PASSWORD_PATH = '/restorePassword';
 const CONFIRM_RESTORE_CODE_PATH = '/confirmRestoreCode';
 const CONFIRM_NEW_PASSWORD_PATH = '/confirmNewPassword';
 const SIGNUP_PATH = '/signup';
+const USERS_PATH = '/users';
 
 export class HttpAuthGateway implements IAuthGateway {
   private readonly authUrl: string;
@@ -137,6 +142,20 @@ export class HttpAuthGateway implements IAuthGateway {
       );
 
       return await castResponse(response, recoveryCodesSchema);
+    } catch (error) {
+      console.error(error);
+      return Result.error(new Error('Ответ не получен'));
+    }
+  }
+
+  async getUsers(cookie: string): Promise<Result<UserDto[]>> {
+    try {
+      const response = await fetch(
+        `${this.authUrl}${USERS_PATH}`,
+        new HttpRequestBuilder().cookie(cookie).build(),
+      );
+
+      return await castResponse(response, z.array(userDtoSchema));
     } catch (error) {
       console.error(error);
       return Result.error(new Error('Ответ не получен'));

@@ -1,0 +1,27 @@
+.user-list {
+  width: 100%;
+  margin: 0;
+  border-collapse: collapse;
+  background-color: var(--gray-100);
+  border-radius: 0.5rem;
+  overflow: hidden;
+  padding: 1rem;
+}
+
+.user-list__heading {
+  padding: 0.75rem;
+  text-align: left;
+  font-size: 0.875rem;
+  font-weight: 600;
+  background-color: var(--gray-300);
+}
+
+.user-list__row:nth-child(even) {
+  background-color: var(--gray-200);
+}
+
+.user-list__cell {
+  padding: 0.75rem;
+  text-align: left;
+  vertical-align: top;
+}
