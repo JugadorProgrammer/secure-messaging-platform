@@ -8,8 +8,9 @@ import {
 } from '@/presentation/api/encryptionMethods';
 import {getAllMessages} from '@/presentation/api/messages';
 import {getRoles} from '@/presentation/api/roles';
-import {getUsers} from '@/presentation/api/users';
+import {createUser, getUsers} from '@/presentation/api/users';
 import {resetEncryptionMethodsStore} from '@/presentation/stores/useEncryptionMethodsStore';
+import {resetUsersStore} from '@/presentation/stores/useUsersStore';
 
 import '../src/app/globals.css';
 
@@ -31,11 +32,13 @@ sb.mock(import('../src/presentation/api/users.ts'));
 const preview: Preview = {
   beforeEach() {
     resetEncryptionMethodsStore();
+    resetUsersStore();
     mocked(getRoles).mockResolvedValue(Result.success(sampleRoles));
     mocked(getAllEncryptionMethods).mockResolvedValue(Result.success(sampleEncryptionMethods));
     mocked(setEncryptionMethodAvailability).mockResolvedValue(Result.success(undefined));
     mocked(getAllMessages).mockResolvedValue(Result.success([]));
     mocked(getUsers).mockResolvedValue(Result.success(sampleUsers));
+    mocked(createUser).mockResolvedValue(Result.success(['AB12CD34', 'EF56GH78']));
   },
 };
 

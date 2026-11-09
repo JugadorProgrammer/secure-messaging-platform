@@ -8,6 +8,7 @@ import type {NewPasswordRequest} from '@/application/IPasswordRecoveryService/Pa
 import type {RestoreCodeRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestoreCodeRequest';
 import type {RestorePasswordRequest} from '@/application/IPasswordRecoveryService/PasswordRecoveryService/RestorePasswordRequest';
 import type {RegistrationRequest} from '@/application/IRegistrationService/RegistrationService/RegistrationRequest';
+import type {CreateUserRequest} from '@/application/IUserService/UserService/CreateUserRequest';
 import type {UserDto} from '@/application/IUserService/UserService/UserDto';
 import {Result} from '@/application/Result';
 
@@ -29,6 +30,7 @@ const CONFIRM_RESTORE_CODE_PATH = '/confirmRestoreCode';
 const CONFIRM_NEW_PASSWORD_PATH = '/confirmNewPassword';
 const SIGNUP_PATH = '/signup';
 const USERS_PATH = '/users';
+const USER_PATH = '/user';
 
 export class HttpAuthGateway implements IAuthGateway {
   private readonly authUrl: string;
@@ -156,6 +158,20 @@ export class HttpAuthGateway implements IAuthGateway {
       );
 
       return await castResponse(response, z.array(userDtoSchema));
+    } catch (error) {
+      console.error(error);
+      return Result.error(new Error('Ответ не получен'));
+    }
+  }
+
+  async createUser(cookie: string, request: CreateUserRequest): Promise<Result<string[]>> {
+    try {
+      const response = await fetch(
+        `${this.authUrl}${USER_PATH}`,
+        new HttpRequestBuilder().post().cookie(cookie).json(request).build(),
+      );
+
+      return await castResponse(response, recoveryCodesSchema);
     } catch (error) {
       console.error(error);
       return Result.error(new Error('Ответ не получен'));

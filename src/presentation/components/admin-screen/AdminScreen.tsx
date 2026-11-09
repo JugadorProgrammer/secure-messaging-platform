@@ -1,6 +1,7 @@
 import {ADMIN_ROLE_DESCRIPTION, ADMIN_ROLE_NAME} from '@/domain/role';
 
 import {AllEncryptionMethodsPanel} from '@/presentation/components/all-encryption-methods-panel/AllEncryptionMethodsPanel';
+import {CreateUserForm} from '@/presentation/components/create-user-form/CreateUserForm';
 import {UserListPanel} from '@/presentation/components/user-list-panel/UserListPanel';
 
 import styles from './AdminScreen.module.css';
@@ -17,6 +18,9 @@ export function AdminScreen() {
       </section>
       <section className={styles['admin-screen__widget']}>
         <AllEncryptionMethodsPanel />
+      </section>
+      <section className={styles['admin-screen__widget']}>
+        <CreateUserForm />
       </section>
       <section className={styles['admin-screen__widget']}>
         <UserListPanel />
