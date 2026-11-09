@@ -1,6 +1,7 @@
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {Role} from '@/domain/role';
 
+import type {SetEncryptionMethodAvailabilityRequest} from '@/application/IEncryptionMethodService/EncryptionMethodService/SetEncryptionMethodAvailabilityRequest';
 import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 import type {DecryptMessageResult} from '@/application/IMessageService/MessageService/DecryptMessageResult';
 import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
@@ -12,6 +13,10 @@ import type {Result} from '@/application/Result';
 export interface ICoordGateway {
   getRoles(): Promise<Result<Role[]>>;
   getAllEncryptionMethods(): Promise<Result<EncryptionMethod[]>>;
+  setEncryptionMethodAvailability(
+    cookie: string,
+    request: SetEncryptionMethodAvailabilityRequest,
+  ): Promise<Result<void>>;
   encryptMessage(cookie: string, request: EncryptMessageRequest): Promise<Result<MessageDto>>;
   decryptMessage(
     cookie: string,

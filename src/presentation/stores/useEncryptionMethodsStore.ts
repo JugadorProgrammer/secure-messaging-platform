@@ -6,12 +6,22 @@ import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {MessageEncryptionMethod} from '@/domain/message';
 import {MESSAGE_ENCRYPTION_METHODS} from '@/domain/message';
 
-import {getAllEncryptionMethods} from '@/presentation/api/encryptionMethods';
+import type {SetEncryptionMethodAvailabilityRequest} from '@/application/IEncryptionMethodService/EncryptionMethodService/SetEncryptionMethodAvailabilityRequest';
+import {Result} from '@/application/Result';
+
+import {
+  getAllEncryptionMethods,
+  setEncryptionMethodAvailability as requestSetEncryptionMethodAvailability,
+} from '@/presentation/api/encryptionMethods';
 
 type EncryptionMethodsState = {
   encryptionMethods: EncryptionMethod[] | null;
   isEncryptionMethodsLoadFailed: boolean;
+  pendingAvailabilityMethodName: string | null;
   loadEncryptionMethods: () => Promise<void>;
+  setEncryptionMethodAvailability: (
+    request: SetEncryptionMethodAvailabilityRequest,
+  ) => Promise<Result<void>>;
 };
 
 const RETRY_LIMIT = 3;
@@ -48,6 +58,7 @@ function isMessageEncryptionMethod(value: string): value is MessageEncryptionMet
 export const useEncryptionMethodsStore = create<EncryptionMethodsState>((set, get) => ({
   encryptionMethods: null,
   isEncryptionMethodsLoadFailed: false,
+  pendingAvailabilityMethodName: null,
   async loadEncryptionMethods() {
     if (get().encryptionMethods !== null) {
       return;
@@ -87,6 +98,34 @@ export const useEncryptionMethodsStore = create<EncryptionMethodsState>((set, ge
 
     return loadPromise;
   },
+  async setEncryptionMethodAvailability(request) {
+    if (get().pendingAvailabilityMethodName !== null) {
+      return Result.error(new Error('Дождитесь завершения предыдущего переключения.'));
+    }
+
+    set({pendingAvailabilityMethodName: request.name});
+
+    const result = await requestSetEncryptionMethodAvailability(request);
+
+    if (!result.isSuccess) {
+      set({pendingAvailabilityMethodName: null});
+      return result;
+    }
+
+    const encryptionMethods = get().encryptionMethods;
+
+    set({
+      pendingAvailabilityMethodName: null,
+      encryptionMethods:
+        encryptionMethods === null
+          ? null
+          : encryptionMethods.map((method) =>
+              method.name === request.name ? {...method, enabled: request.enabled} : method,
+            ),
+    });
+
+    return result;
+  },
 }));
 
 export function resetEncryptionMethodsStore(): void {
@@ -94,5 +133,6 @@ export function resetEncryptionMethodsStore(): void {
   useEncryptionMethodsStore.setState({
     encryptionMethods: null,
     isEncryptionMethodsLoadFailed: false,
+    pendingAvailabilityMethodName: null,
   });
 }

@@ -2,7 +2,10 @@ import type {Preview} from '@storybook/nextjs-vite';
 import {mocked, sb} from 'storybook/test';
 
 import {Result} from '@/application/Result';
-import {getAllEncryptionMethods} from '@/presentation/api/encryptionMethods';
+import {
+  getAllEncryptionMethods,
+  setEncryptionMethodAvailability,
+} from '@/presentation/api/encryptionMethods';
 import {getAllMessages} from '@/presentation/api/messages';
 import {getRoles} from '@/presentation/api/roles';
 import {resetEncryptionMethodsStore} from '@/presentation/stores/useEncryptionMethodsStore';
@@ -27,6 +30,7 @@ const preview: Preview = {
     resetEncryptionMethodsStore();
     mocked(getRoles).mockResolvedValue(Result.success(sampleRoles));
     mocked(getAllEncryptionMethods).mockResolvedValue(Result.success(sampleEncryptionMethods));
+    mocked(setEncryptionMethodAvailability).mockResolvedValue(Result.success(undefined));
     mocked(getAllMessages).mockResolvedValue(Result.success([]));
   },
 };

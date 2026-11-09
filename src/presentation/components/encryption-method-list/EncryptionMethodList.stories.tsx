@@ -1,4 +1,5 @@
 import type {Meta, StoryObj} from '@storybook/nextjs-vite';
+import {fn} from 'storybook/test';
 
 import type {EncryptionMethod} from '@/domain/encryptionMethod';
 
@@ -38,5 +39,21 @@ export const Empty: Story = {
   name: 'Пустой',
   args: {
     methods: [],
+  },
+};
+
+export const WithToggle: Story = {
+  name: 'С переключением',
+  args: {
+    onAvailabilityChange: fn(),
+    pendingAvailabilityMethodName: null,
+  },
+};
+
+export const TogglePending: Story = {
+  name: 'Переключение в процессе',
+  args: {
+    onAvailabilityChange: fn(),
+    pendingAvailabilityMethodName: 'RSA-32768',
   },
 };

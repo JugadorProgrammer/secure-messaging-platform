@@ -5,7 +5,10 @@ import type {EncryptionMethod} from '@/domain/encryptionMethod';
 
 import {Result} from '@/application/Result';
 
-import {getAllEncryptionMethods} from '@/presentation/api/encryptionMethods';
+import {
+  getAllEncryptionMethods,
+  setEncryptionMethodAvailability,
+} from '@/presentation/api/encryptionMethods';
 
 import {AllEncryptionMethodsPanel} from './AllEncryptionMethodsPanel';
 
@@ -57,5 +60,14 @@ export const Failed: Story = {
     return () => {
       window.setTimeout = originalSetTimeout;
     };
+  },
+};
+
+export const ToggleFailed: Story = {
+  name: 'Ошибка переключения',
+  beforeEach() {
+    mocked(setEncryptionMethodAvailability).mockResolvedValue(
+      Result.error(new Error('Не удалось изменить доступность метода шифрования.')),
+    );
   },
 };

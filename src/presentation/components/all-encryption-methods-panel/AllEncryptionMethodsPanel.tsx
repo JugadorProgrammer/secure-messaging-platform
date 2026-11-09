@@ -8,7 +8,13 @@ import {useAllEncryptionMethodsPanel} from './useAllEncryptionMethodsPanel';
 import styles from './AllEncryptionMethodsPanel.module.css';
 
 export function AllEncryptionMethodsPanel() {
-  const {encryptionMethods, isEncryptionMethodsLoadFailed} = useAllEncryptionMethodsPanel();
+  const {
+    encryptionMethods,
+    isEncryptionMethodsLoadFailed,
+    pendingAvailabilityMethodName,
+    notice,
+    setAvailability,
+  } = useAllEncryptionMethodsPanel();
 
   return (
     <div className={styles['all-encryption-methods-panel']}>
@@ -23,10 +29,17 @@ export function AllEncryptionMethodsPanel() {
           <span className={styles['all-encryption-methods-panel__bar']} />
         </div>
       ) : null}
-      {encryptionMethods !== null ? <EncryptionMethodList methods={encryptionMethods} /> : null}
+      {encryptionMethods !== null ? (
+        <EncryptionMethodList
+          methods={encryptionMethods}
+          pendingAvailabilityMethodName={pendingAvailabilityMethodName}
+          onAvailabilityChange={setAvailability}
+        />
+      ) : null}
       {isEncryptionMethodsLoadFailed ? (
         <Notification message="Не удалось загрузить список методов шифрования." />
       ) : null}
+      {notice !== null ? <Notification message={notice.message} /> : null}
     </div>
   );
 }

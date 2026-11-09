@@ -4,6 +4,7 @@ import type {EncryptionMethod} from '@/domain/encryptionMethod';
 import type {Role} from '@/domain/role';
 
 import type {ICoordGateway} from '@/application/ICoordGateway/ICoordGateway';
+import type {SetEncryptionMethodAvailabilityRequest} from '@/application/IEncryptionMethodService/EncryptionMethodService/SetEncryptionMethodAvailabilityRequest';
 import type {DecryptMessageRequest} from '@/application/IMessageService/MessageService/DecryptMessageRequest';
 import type {DecryptMessageResult} from '@/application/IMessageService/MessageService/DecryptMessageResult';
 import type {EncryptMessageRequest} from '@/application/IMessageService/MessageService/EncryptMessageRequest';
@@ -24,6 +25,7 @@ type HttpCoordGatewayDependencies = {
 
 const ROLES_PATH = '/api/roles';
 const ALL_ENCRYPTION_METHODS_PATH = '/api/getAllEncryptionMethods';
+const SET_ENCRYPTION_METHOD_AVAILABILITY_PATH = '/api/setEncryptionMethodAvailability';
 const ENCRYPT_PATH = '/api/encrypt';
 const DECRYPT_PATH = '/api/decrypt';
 const GET_ALL_MESSAGES_PATH = '/api/getAllMessages';
@@ -59,6 +61,29 @@ export class HttpCoordGateway implements ICoordGateway {
       );
 
       return await castResponse(response, z.array(encryptionMethodSchema));
+    } catch (error) {
+      console.error(error);
+      return Result.error(new Error('Ответ не получен'));
+    }
+  }
+
+  async setEncryptionMethodAvailability(
+    cookie: string,
+    request: SetEncryptionMethodAvailabilityRequest,
+  ): Promise<Result<void>> {
+    try {
+      const response = await fetch(
+        `${this.coordUrl}${SET_ENCRYPTION_METHOD_AVAILABILITY_PATH}`,
+        new HttpRequestBuilder().post().cookie(cookie).json(request).build(),
+      );
+
+      if (!response.ok) {
+        const error = new Error(`Ответ со статусом ${response.status}`);
+        console.error(error);
+        return Result.error(error);
+      }
+
+      return Result.success(undefined);
     } catch (error) {
       console.error(error);
       return Result.error(new Error('Ответ не получен'));
