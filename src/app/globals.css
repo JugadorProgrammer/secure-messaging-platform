@@ -15,7 +15,10 @@
 
   --black-700: #000000;
 
-  font-family: 'Roboto', sans-serif;
+  --font-sans: 'Roboto', sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+
+  font-family: var(--font-sans);
 }
 
 *,

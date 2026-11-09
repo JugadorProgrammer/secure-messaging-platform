@@ -1,15 +1,8 @@
 'use client';
 
-import {useState} from 'react';
-import {useRouter} from 'next/navigation';
-
-import {NewPasswordForm} from '@/presentation/components/new-password-form/NewPasswordForm';
-import {PasswordRecoveryCodeForm} from '@/presentation/components/password-recovery-code-form/PasswordRecoveryCodeForm';
-import {RestorePasswordForm} from '@/presentation/components/restore-password-form/RestorePasswordForm';
+import {usePasswordRecoveryForm, type RecoveryStep} from './usePasswordRecoveryForm';
 
 import styles from './PasswordRecoveryForm.module.css';
-
-type RecoveryStep = 'email' | 'confirmationCode' | 'password';
 
 type PasswordRecoveryFormProps = {
   initialStep?: RecoveryStep;
@@ -20,29 +13,7 @@ export function PasswordRecoveryForm({
   initialStep = 'email',
   initialEmail = '',
 }: PasswordRecoveryFormProps) {
-  const router = useRouter();
-  const [step, setStep] = useState<RecoveryStep>(initialStep);
-  const [email, setEmail] = useState(initialEmail);
-
-  function handleEmailSuccess(sentEmail: string): void {
-    setEmail(sentEmail);
-    setStep('confirmationCode');
-  }
-
-  function handleCodeSuccess(): void {
-    setStep('password');
-  }
-
-  function handlePasswordSuccess(): void {
-    router.push('/login');
-    router.refresh();
-  }
-
-  const stepForm = {
-    email: <RestorePasswordForm onSuccess={handleEmailSuccess} />,
-    confirmationCode: <PasswordRecoveryCodeForm email={email} onSuccess={handleCodeSuccess} />,
-    password: <NewPasswordForm onSuccess={handlePasswordSuccess} />,
-  }[step];
+  const {stepForm} = usePasswordRecoveryForm({initialStep, initialEmail});
 
   return (
     <section className={styles['password-recovery-form']}>

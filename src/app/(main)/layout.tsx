@@ -1,5 +1,7 @@
 import type {ReactNode} from 'react';
 
+import {ADMIN_ROLE} from '@/domain/role';
+
 import {getUser} from '@/infrastructure/auth/session';
 
 import {Header} from '@/presentation/components/header/Header';
@@ -13,7 +15,10 @@ export default async function MainLayout({children}: MainLayoutProps) {
 
   return (
     <>
-      <Header isAuthorized={user !== null} />
+      <Header
+        isAuthorized={user !== null}
+        isAdmin={user?.roles.includes(ADMIN_ROLE) ?? false}
+      />
       {children}
     </>
   );

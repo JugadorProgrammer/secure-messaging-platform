@@ -3,7 +3,6 @@
 import {useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
 
-import {Result} from '@/application/Result';
 
 import {login as sendLogin} from '@/presentation/api/login';
 import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
@@ -37,7 +36,7 @@ export function useLoginPasswordForm({onSuccess}: UseLoginPasswordFormParams): {
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 

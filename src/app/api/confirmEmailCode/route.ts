@@ -1,39 +1,32 @@
-import {cookies} from 'next/headers';
 import {NextResponse} from 'next/server';
 
-import type {EmailCode} from '@/application/IAuthGateway';
+import type {EmailCodeRequest} from '@/application/ILoginService/LoginService/EmailCodeRequest';
 
 import {appConfig} from '@/appconfig';
-import {emailCodeSchema} from '@/infrastructure/http/emailCodeSchema';
+import {emailCodeRequestSchema} from '@/infrastructure/http/LoginService/emailCodeRequestSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {handleErrors} from '@/presentation/access/handleErrors';
+import {validateHasCookies} from '@/presentation/access/validateHasCookies';
 
 export const POST = compose(
-  castFromJson(emailCodeSchema),
-  async (emailCode: EmailCode) => {
-    try {
-      const cookie = (await cookies()).toString();
+  castFromJson(emailCodeRequestSchema),
+  validateHasCookies(400),
+  handleErrors(async (request: EmailCodeRequest & {cookie: string}) => {
+    const result = await appConfig
+      .resolve('loginService')
+      .confirmEmailCode(request.cookie, request);
 
-      if (cookie === '') {
-        return new Response(null, {status: 400});
-      }
-
-      const result = await appConfig.resolve('loginService').confirmEmailCode(cookie, emailCode);
-
-      if (!result.isSuccess) {
-        console.error(result.error);
-        return new Response(null, {status: 503});
-      }
-
-      const response = new NextResponse(null, {status: 204});
-      writeSetCookies(response, result.success);
-
-      return response;
-    } catch (error) {
-      console.error(error);
+    if (!result.isSuccess) {
+      console.error(result.error);
       return new Response(null, {status: 503});
     }
-  },
+
+    const response = new NextResponse(null, {status: 204});
+    writeSetCookies(response, result.success);
+
+    return response;
+  }),
 );

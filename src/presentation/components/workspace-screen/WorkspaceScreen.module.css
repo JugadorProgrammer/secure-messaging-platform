@@ -1,0 +1,31 @@
+.workspace-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.workspace-screen__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.workspace-screen__crypto {
+  display: flex;
+  gap: 1.5rem;
+}
+
+.workspace-screen__crypto > * {
+  flex: 1;
+  min-width: 0;
+}
+
+.workspace-screen__widget {
+  display: block;
+  min-height: 8rem;
+  border-radius: 1rem;
+  background: var(--gray-200);
+  padding: 1.5rem;
+}

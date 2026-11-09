@@ -1,14 +1,10 @@
 'use client';
 
-import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-import {Result} from '@/application/Result';
-
-import {emailPattern, loginPattern, passwordPattern} from '@/infrastructure/http/signupSchema';
-import {signup} from '@/presentation/api/signup';
 import {Notification} from '@/presentation/components/notification/Notification';
-import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
+
+import {useRegistrationCredentialsForm} from './useRegistrationCredentialsForm';
 
 import styles from './RegistrationCredentialsForm.module.css';
 
@@ -17,12 +13,19 @@ type RegistrationCredentialsFormProps = {
 };
 
 export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentialsFormProps) {
-  const [login, setLogin] = useState('');
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordConfirmation, setPasswordConfirmation] = useState('');
-  const {notice, show, dismiss} = useScreenNotice();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {
+    login,
+    setLogin,
+    email,
+    setEmail,
+    password,
+    setPassword,
+    passwordConfirmation,
+    setPasswordConfirmation,
+    isSubmitting,
+    notice,
+    submit,
+  } = useRegistrationCredentialsForm({onSuccess});
 
   function handleLoginChange(event: ChangeEvent<HTMLInputElement>): void {
     setLogin(event.target.value);
@@ -40,57 +43,9 @@ export function RegistrationCredentialsForm({onSuccess}: RegistrationCredentials
     setPasswordConfirmation(event.target.value);
   }
 
-  function validateForm(): string | null {
-    if (!loginPattern.test(login)) {
-      return 'Логин: от 3 до 32 символов, латиница и цифры, начинается с буквы.';
-    }
-
-    if (!emailPattern.test(email)) {
-      return 'Почта указана неверно.';
-    }
-
-    if (!passwordPattern.test(password) || !passwordPattern.test(passwordConfirmation)) {
-      return 'Пароль: от 8 до 64 символов, строчная и заглавная буква и цифра.';
-    }
-
-    if (password !== passwordConfirmation) {
-      return 'Пароли не совпадают.';
-    }
-
-    return null;
-  }
-
-  function showValidationFailure(): void {
-    const error = validateForm();
-
-    if (error !== null) {
-      show(error);
-    }
-  }
-
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    showValidationFailure();
-
-    if (validateForm() !== null) {
-      return;
-    }
-
-    setIsSubmitting(true);
-    dismiss();
-
-    const result = await signup({login, email, password});
-
-    setPassword('');
-    setPasswordConfirmation('');
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      show(Result.message(result));
-      return;
-    }
-
-    onSuccess(result.success);
+    await submit();
   }
 
   return (
