@@ -6,7 +6,9 @@ import (
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
+	"net/url"
 	"testing"
+	"time"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
@@ -146,11 +148,20 @@ func TestCORSDisabledByDefault(t *testing.T) {
 	}
 }
 
-// stubConfig реализует Config без пакета config: роутеру нужен только список
-// разрешённых origin.
+// stubConfig реализует Config без пакета config: маршруты здоровья зависят
+// только от списка разрешённых origin, а маршруты прокси при пустом адресе
+// Accounts не регистрируются.
 type stubConfig []string
 
 func (s stubConfig) CORSOrigins() []string { return s }
+
+func (s stubConfig) AccountsBase() *url.URL { return nil }
+
+func (s stubConfig) AccountsCallTimeout() time.Duration { return time.Second }
+
+func (s stubConfig) AuthBodyLimit() int64 { return 1 << 20 }
+
+func (s stubConfig) UsersBodyLimit() int64 { return 64 << 10 }
 
 func TestNewAcceptsStubConfig(t *testing.T) {
 	h := New(stubConfig(nil), discardLogger())
