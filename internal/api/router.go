@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
 
 // Config — та часть конфигурации сервиса, которая нужна роутеру.
@@ -29,14 +30,18 @@ type Config interface {
 
 // New собирает обработчик сервиса: маршруты, middleware и единый формат ошибок.
 //
+// st — хранилище сервиса; nil означает, что база не подключена, и маршруты,
+// которые её требуют, не регистрируются. Проверка роли держится на Сервисе
+// учётных записей: без ACCOUNTS_URL защищённые маршруты тоже не регистрируются.
+//
 // Порядок middleware: RequestID → Logging → Recover → CORS → UniformErrors.
 // Recover стоит выше обработчиков, поэтому паника превращается в 500, а Logging
 // всё равно видит итоговый статус.
-func New(cfg Config, log *slog.Logger) http.Handler {
+func New(cfg Config, st ports.Store, log *slog.Logger) http.Handler {
 	mux := http.NewServeMux()
 
 	registerHealth(mux)
-	registerDevA(mux, cfg, log)
+	registerDevA(mux, cfg, st, log)
 	registerDevB(mux, cfg, log)
 
 	var handler http.Handler = mux
