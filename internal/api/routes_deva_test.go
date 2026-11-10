@@ -93,7 +93,7 @@ func TestAccountsRoutesAreProxied(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
-	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), discardLogger())
+	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), nil, discardLogger())
 
 	for _, rt := range proxyRoutes {
 		t.Run(rt.method+" "+rt.path, func(t *testing.T) {
@@ -124,7 +124,7 @@ func TestUsersRequiresAdminRole(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
-	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), discardLogger())
+	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), nil, discardLogger())
 
 	cases := []struct {
 		name  string
@@ -156,7 +156,7 @@ func TestLogoutRequiresToken(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
-	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), discardLogger())
+	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), nil, discardLogger())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/logout", strings.NewReader("{}"))
 	rec := httptest.NewRecorder()
@@ -170,7 +170,7 @@ func TestAuthRoutesRejectWrongMethod(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
-	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), discardLogger())
+	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/auth/login", http.NoBody))
@@ -185,7 +185,7 @@ func TestAuthBodyLimitIsApplied(t *testing.T) {
 	handler := New(testConfig(t, func(env map[string]string) {
 		env["ACCOUNTS_URL"] = backend.URL
 		env["MAX_BODY_AUTH"] = "16"
-	}), discardLogger())
+	}), nil, discardLogger())
 
 	req := httptest.NewRequest(http.MethodPost, "/api/auth/signup", strings.NewReader(strings.Repeat("a", 64)))
 	rec := httptest.NewRecorder()
@@ -200,7 +200,7 @@ func TestAccountsDownReturnsJSON(t *testing.T) {
 	target := backend.URL
 	backend.Close()
 
-	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = target }), discardLogger())
+	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = target }), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	handler.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/api/auth/login", strings.NewReader("{}")))
@@ -213,7 +213,7 @@ func TestAccountsDownDuringAuthReturns503(t *testing.T) {
 	target := backend.URL
 	backend.Close()
 
-	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = target }), discardLogger())
+	handler := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = target }), nil, discardLogger())
 
 	req := httptest.NewRequest(http.MethodGet, "/api/users", http.NoBody)
 	req.Header.Set("Authorization", "Bearer "+adminToken)

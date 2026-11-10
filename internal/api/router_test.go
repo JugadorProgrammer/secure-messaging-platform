@@ -43,7 +43,7 @@ func discardLogger() *slog.Logger {
 }
 
 func TestHealthRoutes(t *testing.T) {
-	h := New(testConfig(t, nil), discardLogger())
+	h := New(testConfig(t, nil), nil, discardLogger())
 
 	for _, path := range []string{"/health", "/api/health"} {
 		t.Run(path, func(t *testing.T) {
@@ -69,7 +69,7 @@ func TestHealthRoutes(t *testing.T) {
 }
 
 func TestHealthMethodNotAllowed(t *testing.T) {
-	h := New(testConfig(t, nil), discardLogger())
+	h := New(testConfig(t, nil), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodPost, "/api/health", http.NoBody))
@@ -88,7 +88,7 @@ func TestHealthMethodNotAllowed(t *testing.T) {
 }
 
 func TestUnknownRouteReturnsJSON(t *testing.T) {
-	h := New(testConfig(t, nil), discardLogger())
+	h := New(testConfig(t, nil), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/unknown", http.NoBody))
@@ -107,7 +107,7 @@ func TestUnknownRouteReturnsJSON(t *testing.T) {
 }
 
 func TestRequestIDHeaderIsSet(t *testing.T) {
-	h := New(testConfig(t, nil), discardLogger())
+	h := New(testConfig(t, nil), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", http.NoBody)
@@ -123,7 +123,7 @@ func TestCORSHeadersForAllowedOrigin(t *testing.T) {
 	cfg := testConfig(t, func(env map[string]string) {
 		env["CORS_ORIGINS"] = "http://localhost:5173"
 	})
-	h := New(cfg, discardLogger())
+	h := New(cfg, nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", http.NoBody)
@@ -136,7 +136,7 @@ func TestCORSHeadersForAllowedOrigin(t *testing.T) {
 }
 
 func TestCORSDisabledByDefault(t *testing.T) {
-	h := New(testConfig(t, nil), discardLogger())
+	h := New(testConfig(t, nil), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	req := httptest.NewRequest(http.MethodGet, "/health", http.NoBody)
@@ -149,8 +149,8 @@ func TestCORSDisabledByDefault(t *testing.T) {
 }
 
 // stubConfig реализует Config без пакета config: маршруты здоровья зависят
-// только от списка разрешённых origin, а маршруты прокси при пустом адресе
-// Accounts не регистрируются.
+// только от списка разрешённых origin, а маршруты Accounts и методов при
+// пустом адресе и отсутствии хранилища не регистрируются.
 type stubConfig []string
 
 func (s stubConfig) CORSOrigins() []string { return s }
@@ -164,7 +164,7 @@ func (s stubConfig) AuthBodyLimit() int64 { return 1 << 20 }
 func (s stubConfig) UsersBodyLimit() int64 { return 64 << 10 }
 
 func TestNewAcceptsStubConfig(t *testing.T) {
-	h := New(stubConfig(nil), discardLogger())
+	h := New(stubConfig(nil), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
 	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/health", http.NoBody))
