@@ -120,6 +120,29 @@ func (c *Config) CORSOrigins() []string {
 	return c.corsOrigins
 }
 
+// AccountsBase возвращает адрес Сервиса учётных записей.
+//
+// Метод, а не поле, нужен HTTP-слою: api зависит от узкого интерфейса,
+// а не от всей конфигурации.
+func (c *Config) AccountsBase() *url.URL {
+	return c.AccountsURL
+}
+
+// AccountsCallTimeout возвращает таймаут обращения к Сервису учётных записей.
+func (c *Config) AccountsCallTimeout() time.Duration {
+	return c.AccountsTimeout
+}
+
+// AuthBodyLimit возвращает максимальный размер тела запросов /api/auth/*.
+func (c *Config) AuthBodyLimit() int64 {
+	return c.MaxBodyAuth
+}
+
+// UsersBodyLimit возвращает максимальный размер тела POST /api/users.
+func (c *Config) UsersBodyLimit() int64 {
+	return c.MaxBodyUsers
+}
+
 // String возвращает представление конфигурации без секретов.
 func (c *Config) String() string {
 	if c == nil {

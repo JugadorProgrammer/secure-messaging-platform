@@ -4,6 +4,8 @@ package api
 import (
 	"log/slog"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
 )
@@ -15,6 +17,14 @@ import (
 type Config interface {
 	// CORSOrigins возвращает origin, разрешённые CORS.
 	CORSOrigins() []string
+	// AccountsBase возвращает адрес Сервиса учётных записей; nil — адрес не настроен.
+	AccountsBase() *url.URL
+	// AccountsCallTimeout — таймаут обращения к Сервису учётных записей.
+	AccountsCallTimeout() time.Duration
+	// AuthBodyLimit — максимальный размер тела запросов /api/auth/*.
+	AuthBodyLimit() int64
+	// UsersBodyLimit — максимальный размер тела POST /api/users.
+	UsersBodyLimit() int64
 }
 
 // New собирает обработчик сервиса: маршруты, middleware и единый формат ошибок.
