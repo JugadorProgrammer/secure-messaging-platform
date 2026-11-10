@@ -7,7 +7,7 @@ FROM golang:1.27-alpine AS build
 WORKDIR /src
 
 # Слой зависимостей отдельно от исходников: правка кода не сбрасывает кеш.
-COPY go.mod ./
+COPY go.mod go.sum ./
 RUN go mod download
 
 COPY . .
