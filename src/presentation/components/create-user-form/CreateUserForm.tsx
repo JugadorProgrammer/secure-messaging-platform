@@ -40,7 +40,11 @@ export function CreateUserForm() {
   }
 
   function handleRoleChange(event: ChangeEvent<HTMLSelectElement>): void {
-    setRole(event.target.value);
+    const value = Number(event.target.value);
+
+    if (Number.isInteger(value)) {
+      setRole(value);
+    }
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
@@ -48,7 +52,7 @@ export function CreateUserForm() {
     await submit();
   }
 
-  const hasRoles = roles !== null && roles.length > 0 && role !== '';
+  const hasRoles = roles !== null && roles.length > 0 && role !== null;
 
   if (recoveryCodes !== null) {
     return (
@@ -120,14 +124,14 @@ export function CreateUserForm() {
         <select
           className={styles['create-user-form__input']}
           name="role"
-          value={role}
+          value={role ?? ''}
           onChange={handleRoleChange}
           disabled={!hasRoles}
           required
         >
           {hasRoles ? (
             roles.map((item) => (
-              <option key={item.id} value={item.name}>
+              <option key={item.id} value={item.id}>
                 {item.name}
               </option>
             ))

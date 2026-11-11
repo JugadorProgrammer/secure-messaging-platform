@@ -23,8 +23,8 @@ type CreateUserFormState = {
   setEmail: Dispatch<SetStateAction<string>>;
   password: string;
   setPassword: Dispatch<SetStateAction<string>>;
-  role: string;
-  setRole: Dispatch<SetStateAction<string>>;
+  role: number | null;
+  setRole: Dispatch<SetStateAction<number | null>>;
   roles: Role[] | null;
   isRolesFailed: boolean;
   recoveryCodes: readonly string[] | null;
@@ -38,7 +38,7 @@ export function useCreateUserForm(): CreateUserFormState {
   const [login, setLogin] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [role, setRole] = useState('');
+  const [role, setRole] = useState<number | null>(null);
   const [roles, setRoles] = useState<Role[] | null>(null);
   const [isRolesFailed, setIsRolesFailed] = useState(false);
   const [recoveryCodes, setRecoveryCodes] = useState<readonly string[] | null>(null);
@@ -63,11 +63,11 @@ export function useCreateUserForm(): CreateUserFormState {
       setRoles(result.success);
       setIsRolesFailed(false);
       setRole((current) => {
-        if (current !== '' && result.success.some((item) => item.name === current)) {
+        if (current !== null && result.success.some((item) => item.id === current)) {
           return current;
         }
 
-        return result.success[0]?.name ?? '';
+        return result.success[0]?.id ?? null;
       });
     });
 
@@ -89,7 +89,7 @@ export function useCreateUserForm(): CreateUserFormState {
       return 'Пароль: от 8 до 64 символов, строчная и заглавная буква и цифра.';
     }
 
-    if (role.trim() === '') {
+    if (role === null) {
       return 'Нет доступных ролей.';
     }
 
@@ -99,8 +99,8 @@ export function useCreateUserForm(): CreateUserFormState {
   async function submit(): Promise<void> {
     const error = validateForm();
 
-    if (error !== null) {
-      show(error);
+    if (error !== null || role === null) {
+      show(error ?? 'Нет доступных ролей.');
       return;
     }
 
@@ -125,7 +125,7 @@ export function useCreateUserForm(): CreateUserFormState {
     setLogin('');
     setEmail('');
     setPassword('');
-    setRole(roles?.[0]?.name ?? '');
+    setRole(roles?.[0]?.id ?? null);
     setRecoveryCodes(null);
     dismiss();
   }

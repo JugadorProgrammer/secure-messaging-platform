@@ -10,5 +10,5 @@ export const createUserRequestSchema = z.object({
   login: z.string().regex(loginPattern),
   email: z.string().regex(emailPattern),
   password: z.string().regex(passwordPattern),
-  role: z.string().refine((value) => value.trim() !== ''),
+  role: z.int(),
 });
