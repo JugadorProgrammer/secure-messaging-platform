@@ -1,24 +1,19 @@
 package api
 
 import (
-	"context"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/auth"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/methods"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/opslog"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
 
 // accountsPathPrefix — внешний префикс маршрутов. До Сервиса учётных записей
 // запрос доходит без него: /api/auth/login превращается в /auth/login.
 const accountsPathPrefix = "/api"
-
-// auditTimeout — сколько ждём запись в журнал операций. Ответ клиенту от неё
-// не зависит, но ждать зависшую базу бессмысленно.
-const auditTimeout = 2 * time.Second
 
 // accountsPublicRoutes — вход, регистрация и восстановление пароля. Токена не
 // требуют: пользователь получает его в ответе.
@@ -31,23 +26,27 @@ var accountsPublicRoutes = []string{
 	"POST /api/auth/password/confirm",
 }
 
-// registerDevA регистрирует маршруты Dev A: auth, methods, messages (чтение)
-// и verify.
+// registerDevA регистрирует маршруты Dev A: auth, methods, messages (чтение),
+// журнал операций и verify.
 //
-// Здесь проксируются публичные маршруты входа, выход и управление
-// пользователями, а также список методов шифрования и его переключение.
-// Чтение сообщений и проверка подписи — в следующих задачах.
+// st — хранилище сервиса; nil означает, что работать с базой нечем: отказ в
+// доступе тогда не записывается в журнал, а маршруты, которым нужна база
+// (методы шифрования и GET /api/ops-log), не регистрируются.
 func registerDevA(mux *http.ServeMux, cfg Config, st ports.Store, log *slog.Logger) {
-	gw := newAccountsGateway(cfg, log)
+	journal := opslog.New(st, log)
+	gw := newAccountsGateway(cfg, journal, log)
 
 	registerAccountsRoutes(mux, cfg, gw)
-	registerMethodRoutes(mux, st, gw, log)
+	registerMethodRoutes(mux, st, gw, journal, log)
+	registerOpsLogRoutes(mux, gw, st, log)
 }
 
 // accountsGateway — прокси в Сервис учётных записей и цепочки проверки
 // доступа. Поля равны nil, если ACCOUNTS_URL не настроен: без проверки токена
 // защищённый маршрут открывать нельзя.
 type accountsGateway struct {
+	// proxy — обработчик прокси, срезающий /api. nil при отсутствии
+	// ACCOUNTS_URL: без адреса учётных записей запросы до Accounts не доходят.
 	proxy http.Handler
 	// authn требует активную сессию любого пользователя.
 	authn func(http.Handler) http.Handler
@@ -55,7 +54,11 @@ type accountsGateway struct {
 	admin func(http.Handler) http.Handler
 }
 
-func newAccountsGateway(cfg Config, log *slog.Logger) accountsGateway {
+// newAccountsGateway собирает прокси и middleware проверки доступа.
+//
+// journal пишет отказ на административном маршруте (access.denied).
+// Nil-журнал — хранилища нет — не пишет ничего, ответ от этого не меняется.
+func newAccountsGateway(cfg Config, journal *opslog.Logger, log *slog.Logger) accountsGateway {
 	base := cfg.AccountsBase()
 	if base == nil {
 		log.Error("accounts url is not configured: proxy and admin routes are not registered")
@@ -65,10 +68,7 @@ func newAccountsGateway(cfg Config, log *slog.Logger) accountsGateway {
 
 	client := auth.NewAccountsClient(base, cfg.AccountsCallTimeout(), log)
 	authn := auth.Authn(client)
-
-	// audit == nil до подключения журнала операций: Require тогда пропускает
-	// отказ без записи в ops_log, ответ от этого не меняется.
-	requireAdmin := auth.Require(auth.RoleAdmin, nil)
+	requireAdmin := auth.Require(auth.RoleAdmin, journal.Log)
 
 	return accountsGateway{
 		proxy: http.StripPrefix(accountsPathPrefix, auth.NewAccountsProxy(base, log)),
@@ -101,14 +101,14 @@ func registerAccountsRoutes(mux *http.ServeMux, cfg Config, gw accountsGateway) 
 //
 // GET публичный и работает даже без настроенного Accounts: интерфейсу список
 // нужен до входа. PATCH без проверки роли не регистрируется.
-func registerMethodRoutes(mux *http.ServeMux, st ports.Store, gw accountsGateway, log *slog.Logger) {
+func registerMethodRoutes(mux *http.ServeMux, st ports.Store, gw accountsGateway, journal *opslog.Logger, log *slog.Logger) {
 	if st == nil {
 		log.Error("store is not configured: methods routes are not registered")
 
 		return
 	}
 
-	h := methods.NewHandler(methods.NewService(st), storeAudit(st, log), log)
+	h := methods.NewHandler(methods.NewService(st), journal.Log, log)
 
 	mux.Handle("GET /api/methods", http.HandlerFunc(h.List))
 
@@ -120,16 +120,14 @@ func registerMethodRoutes(mux *http.ServeMux, st ports.Store, gw accountsGateway
 		httpx.BodyLimit(methods.MaxPatchBodyBytes)(gw.admin(http.HandlerFunc(h.Patch))))
 }
 
-// storeAudit — запись в журнал операций best-effort: сбой записи не меняет
-// ответ клиента. Контекст запроса к этому моменту мог отменяться, поэтому
-// журнал пишется независимо от него и с собственным таймаутом.
-func storeAudit(st ports.Store, log *slog.Logger) methods.AuditFunc {
-	return func(ctx context.Context, userID *int64, op, ref string, ok bool) {
-		ctx, cancel := context.WithTimeout(context.WithoutCancel(ctx), auditTimeout)
-		defer cancel()
-
-		if err := st.LogOp(ctx, userID, op, ref, ok); err != nil {
-			log.ErrorContext(ctx, "ops log failed", "op", op, "err", err)
-		}
+// registerOpsLogRoutes открывает журнал администратору. Чтение возможно
+// только при подключённом хранилище и настроенном Accounts: иначе пустой
+// ответ выдавал бы «записей нет» там, где читать нечего.
+func registerOpsLogRoutes(mux *http.ServeMux, gw accountsGateway, st ports.Store, log *slog.Logger) {
+	if st == nil || gw.admin == nil {
+		return
 	}
+
+	handler := opslog.NewHandler(st, log)
+	mux.Handle("GET /api/ops-log", gw.admin(http.HandlerFunc(handler.List)))
 }

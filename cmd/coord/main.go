@@ -55,12 +55,10 @@ func run() error {
 }
 
 // serve запускает HTTP-сервер и корректно останавливает его при отмене ctx.
+// st передаётся в маршруты: часть из них работает только с хранилищем.
 func serve(ctx context.Context, cfg *config.Config, st ports.Store, log *slog.Logger) error {
 	srv := &http.Server{
-		Addr: cfg.HTTPAddr,
-		// Контекст существует только во время запроса и приходит в обработчик
-		// от http.Server; при сборке маршрутов его передать нельзя.
-		//nolint:contextcheck // контекст запроса появляется в обработчике, при сборке маршрутов его нет
+		Addr:              cfg.HTTPAddr,
 		Handler:           api.New(cfg, st, log),
 		ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
 		ReadTimeout:       cfg.HTTPReadTimeout,

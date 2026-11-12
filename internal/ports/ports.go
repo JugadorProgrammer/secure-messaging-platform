@@ -87,6 +87,21 @@ type Message struct {
 	CreatedAt    time.Time
 }
 
+// OpLogEntry — строка таблицы ops_log.
+//
+// UserID == nil — анонимный субъект (NULL в БД), а не пользователь 0:
+// идентификатор 0 занят под системный ключ. Ref пустой, если колонка NULL.
+// Текстов сообщений, ключей и токенов в записи не бывает — журнал содержит
+// только код операции и ссылку на объект.
+type OpLogEntry struct {
+	ID     int64     `db:"id"`
+	At     time.Time `db:"at"`
+	UserID *int64    `db:"user_id"`
+	Op     string    `db:"op"`
+	Ref    string    `db:"ref"`
+	OK     bool      `db:"ok"`
+}
+
 // Principal — аутентифицированный пользователь запроса.
 type Principal struct {
 	UserID int64
@@ -112,6 +127,12 @@ type Store interface {
 	SetDecryptMs(ctx context.Context, id, ms int64) error
 	// LogOp: userID == nil — анонимный субъект (NULL в БД), не 0.
 	LogOp(ctx context.Context, userID *int64, op, ref string, ok bool) error
+	// ListOps возвращает страницу журнала операций, новые сверху
+	// (сортировка at DESC, id DESC). limit 1..100, offset >= 0,
+	// иначе ErrInvalidArgument. Пустой результат — пустой слайс, не nil.
+	// Записей пользователя или фильтра по операции нет: журнал читается
+	// администратором целиком.
+	ListOps(ctx context.Context, limit, offset int) ([]OpLogEntry, error)
 }
 
 // CryptoClient — операции Крипто-модуля (contracts.md, раздел 14).
