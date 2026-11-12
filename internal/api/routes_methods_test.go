@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -13,46 +12,7 @@ import (
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
 
-// memStore — хранилище в памяти для проверок сборки маршрутов.
-// Остальные методы ports.Store маршрутам методов не нужны.
-type memStore struct {
-	ports.Store
-
-	rows  []ports.MethodRow
-	ops   []string
-	setOK bool
-}
-
-func newMemStore() *memStore {
-	return &memStore{rows: []ports.MethodRow{
-		{Code: "rsa", Title: "RSA", KeySize: 2048, Enabled: true},
-		{Code: "kuznyechik", Title: "Кузнечик", KeySize: 256, Enabled: true},
-	}}
-}
-
-func (m *memStore) Methods(context.Context) ([]ports.MethodRow, error) {
-	return m.rows, nil
-}
-
-func (m *memStore) SetMethodEnabled(_ context.Context, code string, on bool) error {
-	for i := range m.rows {
-		if m.rows[i].Code == code {
-			m.rows[i].Enabled = on
-			m.setOK = true
-
-			return nil
-		}
-	}
-
-	return ports.ErrNotFound
-}
-
-func (m *memStore) LogOp(_ context.Context, _ *int64, op, ref string, ok bool) error {
-	m.ops = append(m.ops, op+" "+ref)
-
-	return nil
-}
-
+// patchMethod отправляет PATCH /api/methods/{code} через собранный обработчик.
 func patchMethod(t *testing.T, h http.Handler, code, token, body string) *httptest.ResponseRecorder {
 	t.Helper()
 

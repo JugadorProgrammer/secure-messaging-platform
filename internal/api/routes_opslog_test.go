@@ -1,7 +1,6 @@
 package api
 
 import (
-	"context"
 	"encoding/json"
 	"errors"
 	"net/http"
@@ -13,74 +12,6 @@ import (
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/opslog"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
-
-// denial — запись отказа, которую сервис должен отправить в журнал.
-type denial struct {
-	userID *int64
-	op     string
-	ref    string
-	ok     bool
-}
-
-// memStore реализует ports.Store для проверки журнала: LogOp считает записи
-// отказов, ListOps отдаёт заготовленные записи. Остальные методы не
-// используются маршрутами этого теста и отвечают ports.ErrNotFound.
-type memStore struct {
-	denials []denial
-	entries []ports.OpLogEntry
-	limit   int
-	start   int
-}
-
-func (m *memStore) LogOp(_ context.Context, userID *int64, op, ref string, ok bool) error {
-	m.denials = append(m.denials, denial{userID: userID, op: op, ref: ref, ok: ok})
-
-	return nil
-}
-
-func (m *memStore) ListOps(_ context.Context, limit, offset int) ([]ports.OpLogEntry, error) {
-	m.limit = limit
-	m.start = offset
-	if m.entries != nil {
-		return m.entries, nil
-	}
-
-	return []ports.OpLogEntry{}, nil
-}
-
-func (m *memStore) Methods(context.Context) ([]ports.MethodRow, error) {
-	return nil, ports.ErrNotFound
-}
-
-func (m *memStore) SetMethodEnabled(context.Context, string, bool) error {
-	return ports.ErrNotFound
-}
-
-func (m *memStore) UserKey(context.Context, int64) (*ports.UserKey, error) {
-	return nil, ports.ErrNotFound
-}
-
-func (m *memStore) SaveUserKey(context.Context, *ports.UserKey) error {
-	return ports.ErrNotFound
-}
-
-func (m *memStore) CreateMessage(context.Context, *ports.Message) (int64, error) {
-	return 0, ports.ErrNotFound
-}
-
-func (m *memStore) GetMessage(context.Context, int64) (*ports.Message, error) {
-	return nil, ports.ErrNotFound
-}
-
-func (m *memStore) ListMessages(context.Context, *int64, int, int) ([]*ports.Message, error) {
-	return nil, ports.ErrNotFound
-}
-
-func (m *memStore) SetDecryptMs(context.Context, int64, int64) error {
-	return ports.ErrNotFound
-}
-
-var _ ports.Store = (*memStore)(nil)
 
 // opsLogConfig поднимает сервис с адресом Сервиса учётных записей из заглушки.
 func opsLogConfig(t *testing.T, accountsURL string) Config {
@@ -117,8 +48,8 @@ func TestOpsLogIsAdminOnly(t *testing.T) {
 		rec := getAs(t, handler, "/api/ops-log", "")
 
 		assertJSONError(t, rec, http.StatusUnauthorized, httpx.CodeUnauthorized)
-		if len(st.denials) != 0 {
-			t.Errorf("denials = %v, want none: отказ без аутентификации не пишется", st.denials)
+		if len(st.logged) != 0 {
+			t.Errorf("logged = %v, want none: отказ без аутентификации не пишется", st.logged)
 		}
 	})
 
@@ -127,11 +58,11 @@ func TestOpsLogIsAdminOnly(t *testing.T) {
 
 		assertJSONError(t, rec, http.StatusForbidden, httpx.CodeForbidden)
 
-		if len(st.denials) != 1 {
-			t.Fatalf("denials = %d, want 1", len(st.denials))
+		if len(st.logged) != 1 {
+			t.Fatalf("logged = %d, want 1", len(st.logged))
 		}
 
-		got := st.denials[0]
+		got := st.logged[0]
 		if got.op != opslog.OpAccessDenied || got.ref != "GET /api/ops-log" || got.ok {
 			t.Errorf("record = %q %q ok=%v, want %q %q ok=false",
 				got.op, got.ref, got.ok, opslog.OpAccessDenied, "GET /api/ops-log")
@@ -142,15 +73,15 @@ func TestOpsLogIsAdminOnly(t *testing.T) {
 	})
 
 	t.Run("роль admin", func(t *testing.T) {
-		st.denials = nil
+		st.logged = nil
 
 		rec := getAs(t, handler, "/api/ops-log", adminToken)
 
 		if rec.Code != http.StatusOK {
 			t.Fatalf("status = %d, want 200 (body %q)", rec.Code, rec.Body.String())
 		}
-		if len(st.denials) != 0 {
-			t.Errorf("denials = %v, want none: успешный доступ не событие отказа", st.denials)
+		if len(st.logged) != 0 {
+			t.Errorf("logged = %v, want none: успешный доступ не событие отказа", st.logged)
 		}
 
 		var entries []opslog.EntryDTO
@@ -181,8 +112,8 @@ func TestOpsLogPageIsPassedToStore(t *testing.T) {
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 (body %q)", rec.Code, rec.Body.String())
 	}
-	if st.limit != 5 || st.start != 10 {
-		t.Errorf("store got limit=%d offset=%d, want 5/10", st.limit, st.start)
+	if st.listLimit != 5 || st.listOffset != 10 {
+		t.Errorf("store got limit=%d offset=%d, want 5/10", st.listLimit, st.listOffset)
 	}
 	if body := rec.Body.String(); body != "[]" {
 		t.Errorf("body = %q, want an empty array", body)
@@ -213,15 +144,15 @@ func TestDeniedRequestsAreJournaled(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.target, func(t *testing.T) {
-			st.denials = nil
+			st.logged = nil
 
 			rec := getAs(t, handler, tc.target, tc.token)
 			assertJSONError(t, rec, http.StatusForbidden, httpx.CodeForbidden)
 
-			if len(st.denials) != 1 {
-				t.Fatalf("denials = %d, want 1", len(st.denials))
+			if len(st.logged) != 1 {
+				t.Fatalf("logged = %d, want 1", len(st.logged))
 			}
-			if got := st.denials[0]; got.op != opslog.OpAccessDenied || got.ref != tc.want || got.ok {
+			if got := st.logged[0]; got.op != opslog.OpAccessDenied || got.ref != tc.want || got.ok {
 				t.Errorf("record = %q %q ok=%v, want %q %q ok=false",
 					got.op, got.ref, got.ok, opslog.OpAccessDenied, tc.want)
 			}
@@ -248,23 +179,11 @@ func TestJournalFailureDoesNotChangeAnswer(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
-	handler := New(opsLogConfig(t, backend.URL), failingStore{&memStore{}}, discardLogger())
+	handler := New(opsLogConfig(t, backend.URL), &memStore{logErr: errWriteFailed}, discardLogger())
 
 	rec := getAs(t, handler, "/api/ops-log", userToken)
 
 	assertJSONError(t, rec, http.StatusForbidden, httpx.CodeForbidden)
-}
-
-// failingStore — хранилище, в котором запись журнала не удаётся.
-type failingStore struct{ *memStore }
-
-func (failingStore) LogOp(context.Context, *int64, string, string, bool) error {
-	return errors.New("ops_log insert failed")
-}
-
-// int64Ptr возвращает указатель на значение.
-func int64Ptr(v int64) *int64 {
-	return &v
 }
 
 func TestOpsLogRejectsWrongMethod(t *testing.T) {
@@ -281,3 +200,6 @@ func TestOpsLogRejectsWrongMethod(t *testing.T) {
 
 	assertJSONError(t, rec, http.StatusMethodNotAllowed, httpx.CodeMethodNotAllowed)
 }
+
+// errWriteFailed — имитация сбоя записи в ops_log.
+var errWriteFailed = errors.New("ops_log insert failed")
