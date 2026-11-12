@@ -1,8 +1,10 @@
 package api
 
 import (
+	"context"
 	"log/slog"
 	"net/http"
+	"time"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/auth"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
@@ -13,6 +15,10 @@ import (
 // accountsPathPrefix — внешний префикс маршрутов. До Сервиса учётных записей
 // запрос доходит без него: /api/auth/login превращается в /auth/login.
 const accountsPathPrefix = "/api"
+
+// auditTimeout — сколько ждём запись в журнал операций. Ответ клиенту от неё
+// не зависит, но ждать зависшую базу бессмысленно.
+const auditTimeout = 2 * time.Second
 
 // accountsPublicRoutes — вход, регистрация и восстановление пароля. Токена не
 // требуют: пользователь получает его в ответе.
@@ -38,12 +44,11 @@ var accountsPublicRoutes = []string{
 func registerDevA(mux *http.ServeMux, cfg Config, st ports.Store, log *slog.Logger) {
 	base := cfg.AccountsBase()
 	if base == nil {
-		log.Error("accounts routes are not registered: accounts url is not configured")
+		log.Error("accounts url is not configured: proxy and admin routes are not registered")
 
-		return
+		return accountsGateway{}
 	}
 
-	proxy := http.StripPrefix(accountsPathPrefix, auth.NewAccountsProxy(base, log))
 	client := auth.NewAccountsClient(base, cfg.AccountsCallTimeout(), log)
 	authn := auth.Authn(client)
 
@@ -53,12 +58,32 @@ func registerDevA(mux *http.ServeMux, cfg Config, st ports.Store, log *slog.Logg
 	journal := opslog.New(st, log)
 	requireAdmin := auth.Require(auth.RoleAdmin, journal.Log)
 
-	for _, pattern := range accountsPublicRoutes {
-		mux.Handle(pattern, httpx.BodyLimit(cfg.AuthBodyLimit())(proxy))
+	return accountsGateway{
+		proxy: http.StripPrefix(accountsPathPrefix, auth.NewAccountsProxy(base, log)),
+		authn: authn,
+		admin: func(next http.Handler) http.Handler {
+			return authn(requireAdmin(next))
+		},
+	}
+}
+
+// registerAccountsRoutes проксирует вход, выход и управление пользователями.
+func registerAccountsRoutes(mux *http.ServeMux, cfg Config, gw accountsGateway) {
+	if gw.proxy == nil {
+		return
 	}
 
-	// Выход требует активную сессию: без токена запрос до Accounts не доходит.
-	mux.Handle("POST /api/auth/logout", httpx.BodyLimit(cfg.AuthBodyLimit())(authn(proxy)))
+	for _, pattern := range accountsPublicRoutes {
+		mux.Handle(pattern, httpx.BodyLimit(cfg.AuthBodyLimit())(gw.proxy))
+	}
+
+	// Выход требует активную сессию любого пользователя: без токена запрос
+	// до Accounts не доходит.
+	mux.Handle("POST /api/auth/logout", httpx.BodyLimit(cfg.AuthBodyLimit())(gw.authn(gw.proxy)))
+
+	mux.Handle("GET /api/users", gw.admin(gw.proxy))
+	mux.Handle("POST /api/users", httpx.BodyLimit(cfg.UsersBodyLimit())(gw.admin(gw.proxy)))
+}
 
 	mux.Handle("GET /api/users", authn(requireAdmin(proxy)))
 	mux.Handle("POST /api/users", httpx.BodyLimit(cfg.UsersBodyLimit())(authn(requireAdmin(proxy))))

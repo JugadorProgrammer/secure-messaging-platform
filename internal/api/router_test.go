@@ -149,8 +149,8 @@ func TestCORSDisabledByDefault(t *testing.T) {
 }
 
 // stubConfig реализует Config без пакета config: маршруты здоровья зависят
-// только от списка разрешённых origin, а маршруты прокси при пустом адресе
-// Accounts не регистрируются.
+// только от списка разрешённых origin, а маршруты Accounts и методов при
+// пустом адресе и отсутствии хранилища не регистрируются.
 type stubConfig []string
 
 func (s stubConfig) CORSOrigins() []string { return s }
