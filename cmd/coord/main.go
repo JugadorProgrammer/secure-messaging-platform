@@ -12,6 +12,7 @@ import (
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/api"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/store"
 )
 
@@ -50,14 +51,15 @@ func run() error {
 		return err
 	}
 
-	return serve(ctx, cfg, log)
+	return serve(ctx, cfg, st, log)
 }
 
 // serve запускает HTTP-сервер и корректно останавливает его при отмене ctx.
-func serve(ctx context.Context, cfg *config.Config, log *slog.Logger) error {
+// st передаётся в маршруты: часть из них работает только с хранилищем.
+func serve(ctx context.Context, cfg *config.Config, st ports.Store, log *slog.Logger) error {
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           api.New(cfg, log),
+		Handler:           api.New(cfg, st, log),
 		ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
 		ReadTimeout:       cfg.HTTPReadTimeout,
 		WriteTimeout:      cfg.HTTPWriteTimeout,

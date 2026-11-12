@@ -54,7 +54,7 @@ func TestServeStopsOnContextCancel(t *testing.T) {
 
 	errCh := make(chan error, 1)
 	go func() {
-		errCh <- serve(ctx, testConfig(), log)
+		errCh <- serve(ctx, testConfig(), nil, log)
 	}()
 
 	time.Sleep(50 * time.Millisecond)

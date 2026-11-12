@@ -583,3 +583,113 @@ func TestLogOp(t *testing.T) {
 		})
 	}
 }
+
+func TestListOps(t *testing.T) {
+	st := newTestStore(t)
+	ctx := t.Context()
+
+	for i := range 5 {
+		if err := st.LogOp(ctx, int64Ptr(int64(i+1)), "method.toggle", "rsa", i%2 == 0); err != nil {
+			t.Fatalf("LogOp() error = %v", err)
+		}
+	}
+
+	// Анонимная операция с NULL в ref: колонка ref допускает NULL,
+	// и разбор в строку не должен на этом спотыкаться.
+	if _, err := st.pool.Exec(ctx,
+		`INSERT INTO ops_log (user_id, op, ref, ok) VALUES (NULL, 'signature.verify', NULL, TRUE)`); err != nil {
+		t.Fatalf("insert anonymous record: %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		limit   int
+		offset  int
+		wantIDs []int64
+	}{
+		{name: "первая страница", limit: 3, wantIDs: []int64{6, 5, 4}},
+		{name: "вторая страница", limit: 3, offset: 3, wantIDs: []int64{3, 2, 1}},
+		{name: "за пределами", limit: 3, offset: 10},
+		{name: "весь журнал", limit: 10, wantIDs: []int64{6, 5, 4, 3, 2, 1}},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := st.ListOps(ctx, tt.limit, tt.offset)
+			if err != nil {
+				t.Fatalf("ListOps() error = %v", err)
+			}
+			if got == nil {
+				t.Fatal("ListOps() = nil, want non-nil slice")
+			}
+			if len(got) != len(tt.wantIDs) {
+				t.Fatalf("len(ListOps()) = %d, want %d", len(got), len(tt.wantIDs))
+			}
+
+			for i, e := range got {
+				if e.ID != tt.wantIDs[i] {
+					t.Errorf("ListOps()[%d].ID = %d, want %d", i, e.ID, tt.wantIDs[i])
+				}
+				if e.Op == "" || e.At.IsZero() {
+					t.Errorf("entry %+v, want op and at filled", e)
+				}
+			}
+		})
+	}
+}
+
+func TestListOpsKeepsNullFields(t *testing.T) {
+	st := newTestStore(t)
+	ctx := t.Context()
+
+	if _, err := st.pool.Exec(ctx,
+		`INSERT INTO ops_log (user_id, op, ref, ok) VALUES (NULL, 'signature.verify', NULL, FALSE)`); err != nil {
+		t.Fatalf("insert: %v", err)
+	}
+
+	got, err := st.ListOps(ctx, 10, 0)
+	if err != nil {
+		t.Fatalf("ListOps() error = %v", err)
+	}
+	if len(got) != 1 {
+		t.Fatalf("len(ListOps()) = %d, want 1", len(got))
+	}
+
+	// Аноним остаётся nil, а не нулевым идентификатором: 0 занят системным ключом.
+	if got[0].UserID != nil {
+		t.Errorf("UserID = %d, want nil", *got[0].UserID)
+	}
+	if got[0].Ref != "" {
+		t.Errorf("Ref = %q, want empty string for NULL", got[0].Ref)
+	}
+	if got[0].OK {
+		t.Error("OK = true, want false")
+	}
+}
+
+func TestListOpsInvalidArgument(t *testing.T) {
+	tests := []struct {
+		name   string
+		limit  int
+		offset int
+	}{
+		{name: "нулевой limit", limit: 0},
+		{name: "отрицательный limit", limit: -1},
+		{name: "limit больше 100", limit: 101},
+		{name: "отрицательный offset", limit: 10, offset: -1},
+	}
+
+	st := newTestStore(t)
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := st.ListOps(t.Context(), tt.limit, tt.offset)
+			if !errors.Is(err, ports.ErrInvalidArgument) {
+				t.Fatalf("ListOps() error = %v, want ErrInvalidArgument", err)
+			}
+			if got != nil {
+				t.Errorf("ListOps() = %v, want nil on error", got)
+			}
+		})
+	}
+}

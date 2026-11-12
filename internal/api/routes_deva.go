@@ -6,6 +6,8 @@ import (
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/auth"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/opslog"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
 
 // accountsPathPrefix — внешний префикс маршрутов. До Сервиса учётных записей
@@ -29,7 +31,11 @@ var accountsPublicRoutes = []string{
 // Здесь проксируются публичные маршруты входа, выход и управление
 // пользователями. Методы шифрования добавятся в следующей задаче, чтение
 // сообщений и проверка подписи — после них.
-func registerDevA(mux *http.ServeMux, cfg Config, log *slog.Logger) {
+//
+// st — хранилище для журнала операций; nil означает, что писать и читать
+// журнал некуда: отказ в доступе тогда не записывается, а GET /api/ops-log
+// не регистрируется.
+func registerDevA(mux *http.ServeMux, cfg Config, st ports.Store, log *slog.Logger) {
 	base := cfg.AccountsBase()
 	if base == nil {
 		log.Error("accounts routes are not registered: accounts url is not configured")
@@ -41,9 +47,11 @@ func registerDevA(mux *http.ServeMux, cfg Config, log *slog.Logger) {
 	client := auth.NewAccountsClient(base, cfg.AccountsCallTimeout(), log)
 	authn := auth.Authn(client)
 
-	// audit == nil до появления хранилища: Require тогда пропускает отказ
-	// без записи в журнал, ответ от этого не меняется.
-	requireAdmin := auth.Require(auth.RoleAdmin, nil)
+	// Журнал подключается к проверке роли: отказ пользователя на
+	// административном маршруте пишется как access.denied. Без хранилища
+	// Logger остаётся nil и запись молча пропускается, ответ не меняется.
+	journal := opslog.New(st, log)
+	requireAdmin := auth.Require(auth.RoleAdmin, journal.Log)
 
 	for _, pattern := range accountsPublicRoutes {
 		mux.Handle(pattern, httpx.BodyLimit(cfg.AuthBodyLimit())(proxy))
@@ -54,4 +62,16 @@ func registerDevA(mux *http.ServeMux, cfg Config, log *slog.Logger) {
 
 	mux.Handle("GET /api/users", authn(requireAdmin(proxy)))
 	mux.Handle("POST /api/users", httpx.BodyLimit(cfg.UsersBodyLimit())(authn(requireAdmin(proxy))))
+
+	if st != nil {
+		registerOpsLogRoutes(mux, authn, requireAdmin, st, log)
+	}
+}
+
+// registerOpsLogRoutes открывает журнал администратору. Чтение возможно
+// только при подключённом хранилище, иначе ответ был бы пустым списком там,
+// где данных просто нет.
+func registerOpsLogRoutes(mux *http.ServeMux, authn, requireAdmin func(http.Handler) http.Handler, st ports.Store, log *slog.Logger) {
+	handler := opslog.NewHandler(st, log)
+	mux.Handle("GET /api/ops-log", authn(requireAdmin(http.HandlerFunc(handler.List))))
 }
