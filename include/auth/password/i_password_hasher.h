@@ -10,10 +10,15 @@ class IPasswordHasher {
 public:
     virtual ~IPasswordHasher() = default;
 
-    // Возвращает значение, пригодное для хранения в БД.
-    // Конкретный формат определяет реализация CRYPTO.
+    // Создать хэш пароля для хранения в БД.
     virtual std::string hash_password(
         std::string_view password
+    ) = 0;
+
+    // Проверить пароль относительно сохранённого хэша.
+    virtual bool verify_password(
+        std::string_view password,
+        std::string_view stored_hash
     ) = 0;
 };
 
