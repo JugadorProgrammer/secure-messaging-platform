@@ -1,0 +1,16 @@
+
+{
+  "listeners": [
+    {
+      "address": "127.0.0.1",
+      "port": 8080,
+      "https": false
+    }
+  ],
+  "app": {
+    "number_of_threads": 2,
+    "log": {
+      "log_level": "INFO"
+    }
+  }
+}
