@@ -1,8 +1,6 @@
 
 #include "auth/repositories/database.h"
 
-#include <drogon/orm/DbClient.h>
-
 #include <cstdlib>
 #include <exception>
 #include <iostream>
@@ -12,9 +10,9 @@ namespace auth::repositories {
 
 namespace {
 
-// Получение переменной окружения с запасным значением.
 std::string get_env(const char* name, const char* fallback) {
     const char* value = std::getenv(name);
+
     return value != nullptr && value[0] != '\0'
         ? std::string(value)
         : std::string(fallback);
@@ -22,8 +20,7 @@ std::string get_env(const char* name, const char* fallback) {
 
 }  // namespace
 
-bool check_database_connection() {
-    // Настройки подключения.
+drogon::orm::DbClientPtr create_database_client() {
     const std::string host =
         get_env("AUTH_DB_HOST", "127.0.0.1");
 
@@ -36,8 +33,7 @@ bool check_database_connection() {
     const std::string user =
         get_env("AUTH_DB_USER", "auth_user");
 
-    // Пароль читается libpq из переменной PGPASSWORD.
-    // В строку подключения его не добавляем.
+    // Пароль передаётся libpq через PGPASSWORD.
     const std::string conn_info =
         "host=" + host +
         " port=" + port +
@@ -45,24 +41,30 @@ bool check_database_connection() {
         " user=" + user +
         " connect_timeout=5";
 
+    return drogon::orm::DbClient::newPgClient(
+        conn_info, 1
+    );
+}
+
+bool check_database_connection() {
     try {
-        auto client =
-            drogon::orm::DbClient::newPgClient(conn_info, 1);
+        auto client = create_database_client();
 
-        auto result = client->execSqlSync("SELECT 1 AS connection_ok");
+        auto result = client->execSqlSync(
+            "SELECT 1 AS connection_ok"
+        );
 
-        const int value = result[0]["connection_ok"].as<int>();
-
-        if (value != 1) {
-            std::cerr << "Database check returned unexpected value\n";
+        if (result.empty() ||
+            result[0]["connection_ok"].as<int>() != 1) {
+            std::cerr
+                << "Database check returned unexpected value\n";
             return false;
         }
 
         std::cout << "PostgreSQL connection: OK\n";
         return true;
 
-    } catch (const std::exception& e) {
-        // Не выводим строку подключения или секреты.
+    } catch (const std::exception&) {
         std::cerr << "PostgreSQL connection failed\n";
         return false;
     }
