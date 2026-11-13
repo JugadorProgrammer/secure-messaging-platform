@@ -21,6 +21,7 @@ add_executable(smp_auth
     src/http/error_response.cpp
     src/repositories/database.cpp
     src/password/stub_password_hasher.cpp
+    src/validation/registration_validator.cpp
 )
 
 # Путь для поиска собственных заголовочных файлов
@@ -77,5 +78,19 @@ if(BUILD_TESTING)
     add_test(
         NAME auth_password_hasher
         COMMAND auth_password_hasher_test
+    )
+
+    add_executable(auth_registration_validator_test
+    tests/registration_validator_test.cpp
+    src/validation/registration_validator.cpp
+    )
+
+    target_include_directories(auth_registration_validator_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    add_test(
+        NAME auth_registration_validator
+        COMMAND auth_registration_validator_test
     )
 endif()
