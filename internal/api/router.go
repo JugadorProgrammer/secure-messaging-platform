@@ -36,15 +36,23 @@ type Config interface {
 // этого не меняется. Проверка роли держится на Сервисе учётных записей: без
 // ACCOUNTS_URL защищённые маршруты тоже не регистрируются.
 //
+// Маршруты Dev B подключаются опцией WithDevB: им нужны крипто-клиент
+// и ключи, которых у остальных маршрутов нет.
+//
 // Порядок middleware: RequestID → Logging → Recover → CORS → UniformErrors.
 // Recover стоит выше обработчиков, поэтому паника превращается в 500, а Logging
 // всё равно видит итоговый статус.
-func New(cfg Config, st ports.Store, log *slog.Logger) http.Handler {
+func New(cfg Config, st ports.Store, log *slog.Logger, opts ...Option) http.Handler {
+	var o options
+	for _, opt := range opts {
+		opt(&o)
+	}
+
 	mux := http.NewServeMux()
 
 	registerHealth(mux)
 	registerDevA(mux, cfg, st, log)
-	registerDevB(mux, cfg, log)
+	registerDevB(mux, cfg, st, o.devB, log)
 
 	var handler http.Handler = mux
 	handler = httpx.UniformErrors(handler)

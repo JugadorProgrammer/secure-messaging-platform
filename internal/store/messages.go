@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgconn"
@@ -22,20 +23,25 @@ const messageColumns = `id, owner_id, owner_login, method, key_size, plaintext, 
 kuz_key_sealed, kuz_iv, keygen_ms, encrypt_ms, decrypt_ms, created_at`
 
 // CreateMessage сохраняет сообщение и возвращает его идентификатор.
-// m.ID и m.CreatedAt игнорируются: их назначает база.
+// Входные m.ID и m.CreatedAt игнорируются: их назначает база, и после
+// успешной вставки они записываются в m, чтобы ответ 201 не требовал
+// отдельного GetMessage.
 func (s *Store) CreateMessage(ctx context.Context, m *ports.Message) (int64, error) {
 	const q = `
 INSERT INTO messages (owner_id, owner_login, method, key_size, plaintext, ciphertext,
                       kuz_key_sealed, kuz_iv, keygen_ms, encrypt_ms, decrypt_ms)
 VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)
-RETURNING id`
+RETURNING id, created_at`
 
-	var id int64
+	var (
+		id        int64
+		createdAt time.Time
+	)
 
 	err := s.pool.QueryRow(ctx, q,
 		m.OwnerID, m.OwnerLogin, m.Method, m.KeySize, m.Plaintext, m.Ciphertext,
 		m.KuzKeySealed, m.KuzIV, m.KeygenMs, m.EncryptMs, m.DecryptMs,
-	).Scan(&id)
+	).Scan(&id, &createdAt)
 
 	var pgErr *pgconn.PgError
 	if errors.As(err, &pgErr) && pgErr.Code == pgForeignKeyViolation {
@@ -44,6 +50,8 @@ RETURNING id`
 	if err != nil {
 		return 0, fmt.Errorf("store: create message: %w", err)
 	}
+
+	m.ID, m.CreatedAt = id, createdAt
 
 	return id, nil
 }
