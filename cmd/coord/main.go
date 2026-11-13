@@ -3,6 +3,7 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"log/slog"
 	"net/http"
@@ -12,6 +13,8 @@ import (
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/api"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/config"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/cryptoclient"
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/keys"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/store"
 )
@@ -48,6 +51,23 @@ func run() error {
 	defer st.Close()
 
 	if err := st.Migrate(ctx, cfg.RSABits); err != nil {
+		return err
+	}
+
+	crypto := cryptoclient.New(cfg.CryptoURL, cfg.CryptoTimeout, cfg.RSAKeygenTimeout, log)
+
+	keyManager := keys.New(st, crypto, keys.Config{
+		MasterKeyHex:  hex.EncodeToString(cfg.MasterKey[:]),
+		Bits:          cfg.RSABits,
+		KeygenTimeout: cfg.RSAKeygenTimeout,
+	}, log)
+	// Close вызывается раньше st.Close (defer в обратном порядке): прерванная
+	// генерация успевает записать статус failed и перезапустится при старте.
+	defer keyManager.Close()
+
+	// Системный ключ генерируется в фоне: EnsureUserKey не ждёт генерации,
+	// поэтому /health отвечает сразу, а деплой не блокируется на десятки минут.
+	if _, err := keyManager.EnsureUserKey(ctx, keys.SystemUserID); err != nil {
 		return err
 	}
 

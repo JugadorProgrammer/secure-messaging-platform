@@ -7,6 +7,8 @@ import (
 	"io"
 	"log/slog"
 	"os"
+	"sync"
+	"sync/atomic"
 	"testing"
 	"time"
 
@@ -691,5 +693,180 @@ func TestListOpsInvalidArgument(t *testing.T) {
 				t.Errorf("ListOps() = %v, want nil on error", got)
 			}
 		})
+	}
+}
+
+func TestUserKeyEmptyMaterialIsNull(t *testing.T) {
+	st := newTestStore(t)
+	ctx := t.Context()
+
+	if err := st.SaveUserKey(ctx, &ports.UserKey{UserID: 3, Bits: 2048, Status: ports.KeyStatusFailed}); err != nil {
+		t.Fatalf("SaveUserKey() error = %v", err)
+	}
+
+	var pemIsNull, sealedIsNull bool
+
+	err := st.pool.QueryRow(ctx,
+		`SELECT public_key_pem IS NULL, private_sealed IS NULL FROM user_keys WHERE user_id = 3`,
+	).Scan(&pemIsNull, &sealedIsNull)
+	if err != nil {
+		t.Fatalf("query: %v", err)
+	}
+
+	if !pemIsNull || !sealedIsNull {
+		t.Errorf("public_key_pem IS NULL = %v, private_sealed IS NULL = %v, want both true", pemIsNull, sealedIsNull)
+	}
+
+	// Чтение записи с NULL не должно падать на сканировании в string.
+	got, err := st.UserKey(ctx, 3)
+	if err != nil {
+		t.Fatalf("UserKey() error = %v", err)
+	}
+
+	if got.PublicKeyPEM != "" || got.PrivateSealed != nil {
+		t.Errorf("UserKey() = %+v, want empty key material", got)
+	}
+}
+
+func TestStartUserKey(t *testing.T) {
+	st := newTestStore(t)
+	ctx := t.Context()
+
+	started, err := st.StartUserKey(ctx, 5, 4096)
+	if err != nil || !started {
+		t.Fatalf("first StartUserKey() = %v, %v, want true, nil", started, err)
+	}
+
+	started, err = st.StartUserKey(ctx, 5, 4096)
+	if err != nil || started {
+		t.Fatalf("second StartUserKey() = %v, %v, want false, nil", started, err)
+	}
+
+	got, err := st.UserKey(ctx, 5)
+	if err != nil {
+		t.Fatalf("UserKey() error = %v", err)
+	}
+
+	if got.Status != ports.KeyStatusGenerating || got.Bits != 4096 || got.KeygenMs != 0 || got.PublicKeyPEM != "" {
+		t.Errorf("UserKey() = %+v, want empty generating key of 4096 bits", got)
+	}
+}
+
+func TestStartUserKeyConcurrent(t *testing.T) {
+	st := newTestStore(t)
+
+	var (
+		wg      sync.WaitGroup
+		started atomic.Int32
+	)
+
+	for range 10 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+
+			ok, err := st.StartUserKey(t.Context(), 0, 2048)
+			if err != nil {
+				t.Errorf("StartUserKey() error = %v", err)
+			}
+			if ok {
+				started.Add(1)
+			}
+		}()
+	}
+	wg.Wait()
+
+	if n := started.Load(); n != 1 {
+		t.Errorf("StartUserKey() returned true %d times for 10 concurrent calls, want 1", n)
+	}
+}
+
+func TestRestartUserKey(t *testing.T) {
+	material := &ports.UserKey{
+		UserID: 9, Bits: 2048, Status: ports.KeyStatusReady, KeygenMs: 10,
+		PublicKeyPEM: "-----BEGIN RSA PUBLIC KEY-----\ntest\n-----END RSA PUBLIC KEY-----\n", PrivateSealed: []byte{1, 2},
+	}
+
+	tests := []struct {
+		name        string
+		save        *ports.UserKey
+		age         time.Duration
+		wantStarted bool
+		wantStatus  string
+	}{
+		{
+			name:        "failed перезапускается",
+			save:        &ports.UserKey{UserID: 9, Bits: 2048, Status: ports.KeyStatusFailed},
+			wantStarted: true,
+			wantStatus:  ports.KeyStatusGenerating,
+		},
+		{
+			name:       "свежий generating не трогается",
+			save:       &ports.UserKey{UserID: 9, Bits: 2048, Status: ports.KeyStatusGenerating},
+			wantStatus: ports.KeyStatusGenerating,
+		},
+		{
+			name:        "брошенный generating перезапускается",
+			save:        &ports.UserKey{UserID: 9, Bits: 2048, Status: ports.KeyStatusGenerating},
+			age:         3 * time.Hour,
+			wantStarted: true,
+			wantStatus:  ports.KeyStatusGenerating,
+		},
+		{
+			name:       "ready не трогается",
+			save:       material,
+			age:        3 * time.Hour,
+			wantStatus: ports.KeyStatusReady,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			st := newTestStore(t)
+			ctx := t.Context()
+
+			if err := st.SaveUserKey(ctx, tt.save); err != nil {
+				t.Fatalf("SaveUserKey() error = %v", err)
+			}
+
+			if tt.age > 0 {
+				_, err := st.pool.Exec(ctx, `UPDATE user_keys SET updated_at = now() - $2::interval WHERE user_id = $1`,
+					tt.save.UserID, tt.age.String())
+				if err != nil {
+					t.Fatalf("age key: %v", err)
+				}
+			}
+
+			started, err := st.RestartUserKey(ctx, 9, 4096, time.Now().Add(-time.Hour))
+			if err != nil {
+				t.Fatalf("RestartUserKey() error = %v", err)
+			}
+
+			if started != tt.wantStarted {
+				t.Errorf("RestartUserKey() = %v, want %v", started, tt.wantStarted)
+			}
+
+			got, err := st.UserKey(ctx, 9)
+			if err != nil {
+				t.Fatalf("UserKey() error = %v", err)
+			}
+
+			if got.Status != tt.wantStatus {
+				t.Errorf("status = %q, want %q", got.Status, tt.wantStatus)
+			}
+
+			if started && (got.Bits != 4096 || got.PublicKeyPEM != "" || got.PrivateSealed != nil) {
+				t.Errorf("restarted key = %+v, want 4096 bits and no key material", got)
+			}
+		})
+	}
+}
+
+func TestRestartUserKeyMissing(t *testing.T) {
+	st := newTestStore(t)
+
+	started, err := st.RestartUserKey(t.Context(), 404, 2048, time.Now())
+	if err != nil || started {
+		t.Errorf("RestartUserKey() = %v, %v, want false, nil", started, err)
 	}
 }
