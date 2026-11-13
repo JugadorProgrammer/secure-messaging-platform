@@ -22,6 +22,7 @@ add_executable(smp_auth
     src/repositories/database.cpp
     src/password/stub_password_hasher.cpp
     src/validation/registration_validator.cpp
+    src/repositories/user_repository.cpp
 )
 
 # Путь для поиска собственных заголовочных файлов
@@ -93,4 +94,31 @@ if(BUILD_TESTING)
         NAME auth_registration_validator
         COMMAND auth_registration_validator_test
     )
+
+    option(
+    AUTH_ENABLE_DB_INTEGRATION_TESTS
+    "Enable PostgreSQL integration tests"
+    OFF
+)
+
+if(AUTH_ENABLE_DB_INTEGRATION_TESTS)
+    add_executable(auth_user_repository_test
+        tests/user_repository_integration_test.cpp
+        src/repositories/database.cpp
+        src/repositories/user_repository.cpp
+    )
+
+    target_include_directories(auth_user_repository_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+
+    target_link_libraries(auth_user_repository_test PRIVATE
+        Drogon::Drogon
+    )
+
+    add_test(
+        NAME auth_user_repository
+        COMMAND auth_user_repository_test
+    )
+endif()
 endif()
