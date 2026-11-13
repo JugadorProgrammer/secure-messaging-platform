@@ -367,6 +367,11 @@ func TestCreateAndGetMessage(t *testing.T) {
 	if got.CreatedAt.IsZero() {
 		t.Error("CreatedAt is zero")
 	}
+
+	// CreateMessage сам заполняет ID и CreatedAt: ответ 201 строится без GetMessage.
+	if in.ID != id || !in.CreatedAt.Equal(got.CreatedAt) {
+		t.Errorf("after CreateMessage m.ID = %d, m.CreatedAt = %v, want %d, %v", in.ID, in.CreatedAt, id, got.CreatedAt)
+	}
 }
 
 func TestCreateMessageRSAWithoutKuzFields(t *testing.T) {

@@ -56,8 +56,10 @@ func run() error {
 
 	crypto := cryptoclient.New(cfg.CryptoURL, cfg.CryptoTimeout, cfg.RSAKeygenTimeout, log)
 
+	masterKeyHex := hex.EncodeToString(cfg.MasterKey[:])
+
 	keyManager := keys.New(st, crypto, keys.Config{
-		MasterKeyHex:  hex.EncodeToString(cfg.MasterKey[:]),
+		MasterKeyHex:  masterKeyHex,
 		Bits:          cfg.RSABits,
 		KeygenTimeout: cfg.RSAKeygenTimeout,
 	}, log)
@@ -71,15 +73,21 @@ func run() error {
 		return err
 	}
 
-	return serve(ctx, cfg, st, log)
+	return serve(ctx, cfg, st, log, api.WithDevB(api.DevB{
+		Crypto:          crypto,
+		Keys:            keyManager,
+		MasterKeyHex:    masterKeyHex,
+		MaxMessageBytes: cfg.MaxMessageBytes,
+	}))
 }
 
 // serve запускает HTTP-сервер и корректно останавливает его при отмене ctx.
 // st передаётся в маршруты: часть из них работает только с хранилищем.
-func serve(ctx context.Context, cfg *config.Config, st ports.Store, log *slog.Logger) error {
+// opts подключают маршруты, которым нужны другие зависимости (api.WithDevB).
+func serve(ctx context.Context, cfg *config.Config, st ports.Store, log *slog.Logger, opts ...api.Option) error {
 	srv := &http.Server{
 		Addr:              cfg.HTTPAddr,
-		Handler:           api.New(cfg, st, log),
+		Handler:           api.New(cfg, st, log, opts...),
 		ReadHeaderTimeout: cfg.HTTPReadHeaderTimeout,
 		ReadTimeout:       cfg.HTTPReadTimeout,
 		WriteTimeout:      cfg.HTTPWriteTimeout,
