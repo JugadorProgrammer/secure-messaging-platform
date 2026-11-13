@@ -15,4 +15,16 @@ std::string StubPasswordHasher::hash_password(
     );
 }
 
+bool StubPasswordHasher::verify_password(
+    std::string_view password,
+    std::string_view stored_hash
+) {
+    (void)password;
+    (void)stored_hash;
+
+    throw std::runtime_error(
+        "Password verification provider is not configured"
+    );
+}
+
 }  // namespace auth::password
