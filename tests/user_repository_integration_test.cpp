@@ -96,6 +96,57 @@ int main() {
                 );
             }
 
+            const auto found_by_email =
+                repository.find_by_email(email);
+
+            if (!found_by_email ||
+                found_by_email->id != id ||
+                found_by_email->login != login ||
+                found_by_email->email != email ||
+                found_by_email->password_hash !=
+                    "test-only-not-a-password-hash" ||
+                found_by_email->roles.size() != 1 ||
+                found_by_email->roles[0] != "user") {
+                throw std::runtime_error(
+                    "User lookup by email failed"
+                );
+            }
+
+            // Проверка поиска без учёта регистра.
+            std::string upper_email = email;
+
+            for (char& c : upper_email) {
+                if (c >= 'a' && c <= 'z') {
+                    c = static_cast<char>(c - 'a' + 'A');
+                }
+            }
+
+            const auto case_insensitive =
+                repository.find_by_email(upper_email);
+
+            if (!case_insensitive ||
+                case_insensitive->id != id) {
+                throw std::runtime_error(
+                    "Case insensitive email lookup failed"
+                );
+            }
+
+            // Несуществующий email.
+            if (repository.find_by_email(
+                    "missing_" + email)) {
+                throw std::runtime_error(
+                    "Unexpected user found by email"
+                );
+            }
+
+            // Проверка на SQL-инъекцию.
+            if (repository.find_by_email("' OR 1=1 --")) {
+                throw std::runtime_error(
+                    "Email lookup SQL injection test failed"
+                );
+            }
+
+
         } catch (...) {
             client->execSqlSync(
                 "DELETE FROM users WHERE id = $1::uuid",
