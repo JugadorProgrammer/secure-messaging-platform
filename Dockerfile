@@ -9,6 +9,7 @@ RUN apt-get update && \
         pkg-config \
         libdrogon-dev \
         libpq-dev \
+        libssl-dev \
         libjsoncpp-dev \
         uuid-dev \
         zlib1g-dev \
