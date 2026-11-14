@@ -122,3 +122,7 @@ if(AUTH_ENABLE_DB_INTEGRATION_TESTS)
     )
 endif()
 endif()
+# AUTH-15: recovery code storage
+find_package(OpenSSL REQUIRED COMPONENTS Crypto)
+target_sources(smp_auth PRIVATE src/repositories/recovery_codes_repository.cpp)
+target_link_libraries(smp_auth PRIVATE OpenSSL::Crypto)
