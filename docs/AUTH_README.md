@@ -443,3 +443,64 @@ AUTH_SMTP_SECURITY=tls
 
 Для Brevo подтвердите домен и настройте адрес отправителя. Режим `tls` требует
 STARTTLS для `smtp://`, а `smtps://` открывает TLS-соединение сразу.
+
+
+## AUTH-19. Логин и пароль
+
+`POST /auth/login` (COORD) и `POST /login` (FRONT) принимают JSON
+`{"login":"demo","password":"DemoPassword123!"}`. При успешной проверке
+AUTH отправляет шестизначный код на email аккаунта и возвращает `204` с
+`Set-Cookie: auth_pending=…`. Cookie действует 5 минут. Для локального HTTP
+оверрайд Mailpit снимает атрибут `Secure`.
+
+| HTTP | Код | Причина |
+|---|---|---|
+| 400 | `INVALID_REQUEST` | Поля запроса отсутствуют или имеют неверный формат |
+| 401 | `INVALID_CREDENTIALS` | Логин или пароль не прошли проверку |
+| 503 | `LOGIN_UNAVAILABLE` | Вход временно недоступен, например при ошибке PostgreSQL или SMTP |
+
+Для нового тома Compose применяет миграцию автоматически. Для существующего
+тома выполните её отдельно:
+
+```bash
+docker compose exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < db/003_login_challenges.sql
+```
+
+### Быстрая проверка на локальном стенде
+
+Команды ниже создают тестовую запись с известным паролем. Используйте чистую
+локальную БД.
+
+```bash
+compose=(docker compose -f compose.yaml -f compose.mailpit.yaml)
+demo_hash=$(printf '%s\n' 'DemoPassword123!' |
+  "${compose[@]}" exec -T auth ./smp_auth --hash-password) &&
+"${compose[@]}" exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB" -v "demo_hash=$1"' \
+  sh "$demo_hash" <<'SQL'
+INSERT INTO users (login, email, password_hash)
+VALUES ('auth-demo', 'auth-demo@example.test', :'demo_hash');
+SQL
+
+curl -i http://127.0.0.1:8080/login \
+  -H 'Content-Type: application/json' \
+  -d '{"login":"auth-demo","password":"DemoPassword123!"}'
+```
+
+Ожидается `204` и письмо в [Mailpit](http://127.0.0.1:8025). Неверный пароль
+возвращает `401`. Для текущего стенда `Pbkdf2PasswordHasher` создаёт и проверяет
+хэши PBKDF2-HMAC-SHA256 с 600 000 итерациями и случайной солью. Когда будет готов
+провайдер CRYPTO, подключите его через `IPasswordHasher` вместе с регистрацией
+и сменой пароля. Форматы хэшей провайдеров должны быть согласованы.
+
+### Данные для AUTH-20
+
+Промежуточный идентификатор приходит в cookie `auth_pending`. Для поиска
+в `login_challenges` используйте `auth::services::login_token_hash(token)`,
+для проверки кода — `auth::services::login_email_code_hash(token, code)`. Успех
+возможен при совпадении обоих хэшей и `expires_at > now()`. Погашение делается
+одной операцией, например `DELETE … RETURNING user_id`, с последующим переходом
+на этап одноразового recovery code. В AUTH-19 создаётся только промежуточный
+идентификатор. Токен полной сессии выдаётся после третьего этапа.
