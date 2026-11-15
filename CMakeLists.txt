@@ -12,11 +12,13 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 # Поиск установленного фреймворка Drogon
 find_package(Drogon CONFIG REQUIRED)
+find_package(CURL 7.85 REQUIRED)
 
 # Исполняемый файл сервиса AUTH
 add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
+    src/services/smtp_mailer.cpp
     src/http/error_response.cpp
     src/repositories/database.cpp
     src/password/stub_password_hasher.cpp
@@ -32,6 +34,7 @@ target_include_directories(smp_auth PRIVATE
 # Подключение Drogon
 target_link_libraries(smp_auth PRIVATE
     Drogon::Drogon
+    CURL::libcurl
 )
 
 # Предупреждения компилятора

@@ -10,6 +10,7 @@ RUN apt-get update && \
         libdrogon-dev \
         libpq-dev \
         libssl-dev \
+        libcurl4-openssl-dev \
         libjsoncpp-dev \
         uuid-dev \
         zlib1g-dev \
@@ -44,6 +45,7 @@ RUN apt-get update && \
     apt-get install -y --no-install-recommends \
         libdrogon1t64 \
         libpq5 \
+        libcurl4t64 \
         libjsoncpp25 \
         libssl3t64 \
         ca-certificates \
