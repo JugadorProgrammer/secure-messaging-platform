@@ -6,6 +6,7 @@ services:
       AUTH_SMTP_USERNAME: ""
       AUTH_SMTP_PASSWORD: ""
       AUTH_SMTP_SECURITY: none
+      AUTH_COOKIE_SECURE: "false"
     depends_on:
       mailpit:
         condition: service_started
