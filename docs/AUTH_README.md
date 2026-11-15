@@ -114,7 +114,7 @@ docker compose down
 Установка зависимости через vcpkg:
 
 ```powershell
-D:\vcpkg\vcpkg.exe install "drogon[postgres]:x64-windows" --recurse
+D:\vcpkg\vcpkg.exe install "drogon[postgres]:x64-windows" "curl:x64-windows" --recurse
 ```
 
 Конфигурация проекта:
@@ -415,3 +415,31 @@ ctest --test-dir build -C Debug --output-on-failure
 - Выдача токенов и HTTP-авторизация не входят в AUTH-8.
 - `password_hash` является внутренним полем и не должен передаваться клиентам API.
 - В дальнейшем рекомендуется использовать асинхронные операции БД в HTTP-обработчиках.
+
+## AUTH-18. Отправка кода подтверждения по почте
+
+`auth::services::SmtpMailer` отправляет шестизначный код. Вызов синхронный и может
+занять до 8 секунд. В HTTP-обработчиках вызывайте его вне потока ввода-вывода.
+
+Для локальной демонстрации скопируйте `.env.example` в `.env` и запустите:
+
+```bash
+docker compose -f compose.yaml -f compose.mailpit.yaml up -d --build
+```
+
+Письма попадут в [Mailpit](http://127.0.0.1:8025). Его интерфейс доступен
+на машине, где запущен Compose. SMTP-порт доступен внутри Docker-сети.
+
+Для реальной доставки запустите обычный `docker compose up -d --build` с
+настройками вашего SMTP-провайдера в `.env`. Пример для Brevo:
+
+```dotenv
+AUTH_SMTP_URL=smtp://smtp-relay.brevo.com:587
+AUTH_SMTP_FROM=auth@example.com
+AUTH_SMTP_USERNAME=your-smtp-login
+AUTH_SMTP_PASSWORD=your-smtp-key
+AUTH_SMTP_SECURITY=tls
+```
+
+Для Brevo подтвердите домен и настройте адрес отправителя. Режим `tls` требует
+STARTTLS для `smtp://`, а `smtps://` открывает TLS-соединение сразу.
