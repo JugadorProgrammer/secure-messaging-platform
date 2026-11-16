@@ -696,3 +696,83 @@ docker compose exec -T postgres sh -c \
 Интеграционный тест `auth_email_factor` проверяет корректный, неверный, просроченный и повторно использованный код, создание следующего challenge и отсутствие полной пользовательской сессии до третьего фактора.
 
 Сквозной сценарий проверяется через Docker Compose, PostgreSQL и Mailpit.
+
+# AUTH-30 — интеграция с COORD
+
+## Порты локального стенда
+
+| Служба | Адрес с Windows-хоста | Адрес внутри Docker |
+| --- | --- | --- |
+| COORD HTTP | `http://127.0.0.1:8080` | `coord:8080` (COORD-сеть) |
+| AUTH HTTP | `http://127.0.0.1:8081` | `auth:8080` (AUTH-сеть) |
+| COORD PostgreSQL | `127.0.0.1:5432` | `postgres:5432` (COORD-сеть) |
+| AUTH PostgreSQL | `127.0.0.1:5433` | `postgres:5432` (AUTH-сеть) |
+| Mailpit UI | `http://127.0.0.1:8025` | `mailpit:8025` |
+| Mailpit SMTP | НЕ опубликован | `mailpit:1025` (AUTH-сеть) |
+
+Стенды запускаются из разных рабочих деревьев Git, поэтому они используют отдельные Docker Compose-проекты и разные сети. Для вызовов COORD -> AUTH из контейнера COORD используется опубликованный порт хоста: `http://host.docker.internal:8081`. Не используйте `localhost:8081` внутри контейнера COORD: это сам контейнер COORD, а не хост.
+
+**Безопасность:** хостовый порт AUTH `8081` опубликован на интерфейсах хоста, поскольку он должен быть доступен через `host.docker.internal`. Это локальный тестовый вариант; ограничьте порт брандмауэром и не используйте такое опубликование для production. AUTH PostgreSQL и Mailpit UI привязаны только к `127.0.0.1`. SMTP порт `1025` наружу не публикуется.
+
+## Установка AUTH (ветка AUTH-30)
+
+В корне AUTH:
+
+```powershell
+Copy-Item .env.example .env # только если .env ещё отсутствует
+# В .env укажите свой POSTGRES_PASSWORD (НЕ закоммитьте .env)
+docker compose -f compose.yaml -f compose.mailpit.yaml config --quiet
+docker compose -f compose.yaml -f compose.mailpit.yaml up -d --build
+docker compose -f compose.yaml -f compose.mailpit.yaml ps
+Invoke-RestMethod http://127.0.0.1:8081/health
+```
+
+`config/config.docker.json` не меняется: процесс AUTH продолжает слушать `0.0.0.0:8080` внутри контейнера. Изменяется только публикация порта на хост.
+
+Mailpit UI: http://127.0.0.1:8025. SMTP AUTH: `smtp://mailpit:1025`.
+
+## Установка COORD (ветка COORD-develop)
+
+Нужно **отдельное рабочее дерево/папка** COORD — не переключайте текущую ветку AUTH в том же каталоге при запущенном тестовом стенде.
+
+```powershell
+# В ДРУГОЙ папке с веткой COORD-develop:
+# Скопируйте .env.example в .env, если файла ещё нет.
+# Значения в .env COORD:
+# HTTP_PORT=8080
+# POSTGRES_PORT=5432
+# ACCOUNTS_URL=http://host.docker.internal:8081
+# CRYPTO_URL=http://host.docker.internal:8082
+# MASTER_KEY=<64 hex characters> (локальный секрет)
+docker compose -f docker-compose.yml config --quiet
+docker compose -f docker-compose.yml up -d --build
+Invoke-RestMethod http://127.0.0.1:8080/health
+```
+
+`COORD-develop/docker-compose.yml` уже содержит `ACCOUNTS_URL: ${ACCOUNTS_URL:-http://host.docker.internal:8081}`, `HTTP_PORT=8080` и `POSTGRES_PORT=5432` по умолчанию. Указывать `ACCOUNTS_URL=http://localhost:8081` при Docker-запуске COORD нельзя. Отдельно проверить доступность CRYPTO (запуск COORD может зависеть от криптосервиса).
+
+## Сквозная проверка регистрации через COORD
+
+После запуска обоих стеков, из корня AUTH:
+
+```powershell
+powershell -NoProfile -ExecutionPolicy Bypass -File .\tests\coord_integration_e2e.ps1
+```
+
+Тест проверяет `GET /health` обоих сервисов, POST `/api/auth/signup` через COORD, 10 кодов восстановления и создание пользователя в БД AUTH, повторную регистрацию `409`. В конце удаляет только собственного временного пользователя. Запускать только на выделенной тестовой БД.
+
+Существующие AUTH-25–29 тесты после смены хостового порта можно запускать, задав `-BaseUrl http://127.0.0.1:8081`, либо заменив в них значение параметра `BaseUrl` по умолчанию.
+
+## Проверка портов и ошибки
+
+```powershell
+Get-NetTCPConnection -State Listen | Where-Object LocalPort -in 8080,8081,5432,5433,8025
+
+docker compose -f compose.yaml -f compose.mailpit.yaml logs --tail 80 auth
+```
+
+Если порт занят, согласуйте другое значение соответствующего хостового порта, не меняя внутренние порты процессов. Для другого хостового порта AUTH обязательно изменить `ACCOUNTS_URL` у COORD.
+
+## Изменения документации
+
+К существующему `docs/AUTH_README.md` добавьте ссылку на этот документ и обновите примеры с `127.0.0.1:8080` на `127.0.0.1:8081` для запросов непосредственно к AUTH. **Не заменяйте весь AUTH_README.md:** он содержит накопленные контракты других задач.

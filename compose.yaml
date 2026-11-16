@@ -1,18 +1,18 @@
-
+# AUTH-30: host ports aligned with COORD (COORD=8080, AUTH=8081).
+# 8081 is published on the host to support COORD's
+# ACCOUNTS_URL=http://host.docker.internal:8081 from a separate Compose stack.
+# Restrict this development port with the host firewall when needed.
 services:
   postgres:
     image: postgres:17
     container_name: smp-auth-postgres
     restart: unless-stopped
-
     environment:
       POSTGRES_DB: ${POSTGRES_DB:?required}
       POSTGRES_USER: ${POSTGRES_USER:?required}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?required}
-
     ports:
-      - "127.0.0.1:5432:5432"
-
+      - "127.0.0.1:${AUTH_POSTGRES_HOST_PORT:-5433}:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/001_identity.sql:/docker-entrypoint-initdb.d/001_identity.sql:ro
@@ -21,7 +21,6 @@ services:
       - ./db/004_auth_sessions.sql:/docker-entrypoint-initdb.d/004_auth_sessions.sql:ro
       - ./db/005_recovery_challenges.sql:/docker-entrypoint-initdb.d/005_recovery_challenges.sql:ro
       - ./db/006_password_reset.sql:/docker-entrypoint-initdb.d/006_password_reset.sql:ro
-
     healthcheck:
       test:
         - CMD-SHELL
@@ -34,14 +33,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-
     container_name: smp-auth
     restart: unless-stopped
-
     depends_on:
       postgres:
         condition: service_healthy
-
     environment:
       AUTH_CONFIG_PATH: config/config.docker.json
       AUTH_DB_HOST: postgres
@@ -55,9 +51,9 @@ services:
       AUTH_SMTP_PASSWORD: ${AUTH_SMTP_PASSWORD:-}
       AUTH_SMTP_SECURITY: ${AUTH_SMTP_SECURITY:-tls}
       AUTH_COOKIE_SECURE: ${AUTH_COOKIE_SECURE:-true}
-
     ports:
-      - "127.0.0.1:8080:8080"
+      # A separate COORD Compose stack connects through host.docker.internal:8081.
+      - "${AUTH_HTTP_HOST_PORT:-8081}:8080"
 
 volumes:
   postgres_data:
