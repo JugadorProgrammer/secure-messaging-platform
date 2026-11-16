@@ -48,7 +48,8 @@ bool is_valid_email(std::string_view email) {
 
 bool is_valid_password(std::string_view password) {
     if (password.size() < kMinPasswordLength ||
-        password.size() > kMaxPasswordLength) {
+        password.size() > kMaxPasswordLength ||
+        password.find('\0') != std::string_view::npos) {
         return false;
     }
 

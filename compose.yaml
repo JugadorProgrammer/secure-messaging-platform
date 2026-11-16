@@ -16,6 +16,7 @@ services:
     volumes:
       - postgres_data:/var/lib/postgresql/data
       - ./db/001_identity.sql:/docker-entrypoint-initdb.d/001_identity.sql:ro
+      - ./db/002_recovery_codes.sql:/docker-entrypoint-initdb.d/002_recovery_codes.sql:ro
       - ./db/003_login_challenges.sql:/docker-entrypoint-initdb.d/003_login_challenges.sql:ro
 
     healthcheck:

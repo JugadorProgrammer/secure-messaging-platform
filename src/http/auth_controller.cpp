@@ -56,7 +56,7 @@ void register_login_routes(std::shared_ptr<const services::FirstFactor> first_fa
     static trantor::ConcurrentTaskQueue workers(2, "auth-login");
     static std::atomic_size_t pending_requests{0};
 
-    const auto handler = [first_factor = std::move(first_factor), secure_cookie](
+    auto handler = [first_factor = std::move(first_factor), secure_cookie](
         const drogon::HttpRequestPtr& request,
         std::function<void(const drogon::HttpResponsePtr&)>&& callback
     ) {
@@ -92,8 +92,9 @@ void register_login_routes(std::shared_ptr<const services::FirstFactor> first_fa
             }
         );
     };
-    drogon::app().registerHandler("/auth/login", handler, {drogon::Post});
-    drogon::app().registerHandler("/login", handler, {drogon::Post});
+    // Каждый маршрут владеет своим экземпляром обработчика.
+    drogon::app().registerHandler("/auth/login", decltype(handler){handler}, {drogon::Post});
+    drogon::app().registerHandler("/login", std::move(handler), {drogon::Post});
 }
 
 }  // namespace auth::http

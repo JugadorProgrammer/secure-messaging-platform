@@ -9,6 +9,7 @@
 
 #include "auth/http/auth_controller.h"
 #include "auth/http/health_controller.h"
+#include "auth/http/signup_controller.h"
 #include "auth/password/pbkdf2_password_hasher.h"
 #include "auth/repositories/database.h"
 #include "auth/services/first_factor.h"
@@ -40,12 +41,14 @@ int main(int argc, char* argv[]) {
             return 1;
         }
 
+        auto database = auth::repositories::create_database_client();
         auto first_factor = std::make_shared<auth::services::FirstFactor>(
-            auth::repositories::create_database_client(), hasher,
+            database, hasher,
             auth::services::SmtpMailer(auth::services::smtp_settings_from_environment())
         );
         const char* secure_cookie = std::getenv("AUTH_COOKIE_SECURE");
         auth::http::register_health_routes();
+        auth::http::register_signup_routes(database, hasher);
         auth::http::register_login_routes(first_factor,
             secure_cookie == nullptr || std::string_view(secure_cookie) != "false");
         drogon::app().run();

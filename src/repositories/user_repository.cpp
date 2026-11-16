@@ -121,4 +121,31 @@ std::optional<models::User> UserRepository::find_by_email(
 }
 
 
+std::optional<std::string> UserRepository::create_user(
+    std::string_view login,
+    std::string_view email,
+    std::string_view password_hash
+) const {
+    const auto result = client_->execSqlSync(
+        R"(
+            WITH new_user AS (
+                INSERT INTO users (login, email, password_hash)
+                VALUES ($1, $2, $3)
+                ON CONFLICT DO NOTHING
+                RETURNING id
+            )
+            INSERT INTO user_roles (user_id, role_id)
+            SELECT id, (SELECT id FROM roles WHERE code = 'user')
+            FROM new_user
+            RETURNING user_id::text AS id
+        )",
+        std::string(login), std::string(email), std::string(password_hash)
+    );
+
+    if (result.empty()) {
+        return std::nullopt;
+    }
+    return result[0]["id"].as<std::string>();
+}
+
 }  // namespace auth::repositories
