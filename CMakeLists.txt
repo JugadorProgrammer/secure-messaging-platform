@@ -18,10 +18,12 @@ find_package(CURL 7.85 REQUIRED)
 add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
+    src/http/auth_controller.cpp
     src/services/smtp_mailer.cpp
+    src/services/first_factor.cpp
     src/http/error_response.cpp
     src/repositories/database.cpp
-    src/password/stub_password_hasher.cpp
+    src/password/pbkdf2_password_hasher.cpp
     src/validation/registration_validator.cpp
     src/repositories/user_repository.cpp
 )
@@ -138,4 +140,16 @@ if(BUILD_TESTING)
     target_include_directories(auth_recovery_codes_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(auth_recovery_codes_test PRIVATE OpenSSL::Crypto)
     add_test(NAME auth_recovery_codes COMMAND auth_recovery_codes_test)
+endif()
+
+if(BUILD_TESTING)
+    add_executable(auth_pbkdf2_password_hasher_test
+        tests/pbkdf2_password_hasher_test.cpp
+        src/password/pbkdf2_password_hasher.cpp
+    )
+    target_include_directories(auth_pbkdf2_password_hasher_test PRIVATE
+        ${CMAKE_CURRENT_SOURCE_DIR}/include
+    )
+    target_link_libraries(auth_pbkdf2_password_hasher_test PRIVATE OpenSSL::Crypto)
+    add_test(NAME auth_pbkdf2_password_hasher COMMAND auth_pbkdf2_password_hasher_test)
 endif()
