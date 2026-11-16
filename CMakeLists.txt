@@ -20,12 +20,14 @@ add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
     src/http/auth_controller.cpp
+    src/http/recovery_controller.cpp
     src/http/session_controller.cpp
     src/http/signup_controller.cpp
     src/services/smtp_mailer.cpp
     src/services/first_factor.cpp
     src/services/login_token.cpp
     src/services/registration.cpp
+    src/services/recovery_factor.cpp
     src/http/error_response.cpp
     src/repositories/database.cpp
     src/repositories/session_repository.cpp
@@ -140,6 +142,19 @@ if(AUTH_ENABLE_DB_INTEGRATION_TESTS)
     target_include_directories(auth_session_repository_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
     target_link_libraries(auth_session_repository_test PRIVATE Drogon::Drogon OpenSSL::Crypto)
     add_test(NAME auth_session_repository COMMAND auth_session_repository_test)
+
+    add_executable(auth_recovery_factor_test
+        tests/recovery_factor_integration_test.cpp
+        src/repositories/database.cpp
+        src/repositories/recovery_codes_repository.cpp
+        src/repositories/session_repository.cpp
+        src/services/login_token.cpp
+        src/services/recovery_codes.cpp
+        src/services/recovery_factor.cpp
+    )
+    target_include_directories(auth_recovery_factor_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(auth_recovery_factor_test PRIVATE Drogon::Drogon OpenSSL::Crypto)
+    add_test(NAME auth_recovery_factor COMMAND auth_recovery_factor_test)
 endif()
 endif()
 

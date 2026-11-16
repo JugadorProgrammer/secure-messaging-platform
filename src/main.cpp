@@ -9,6 +9,7 @@
 
 #include "auth/http/auth_controller.h"
 #include "auth/http/health_controller.h"
+#include "auth/http/recovery_controller.h"
 #include "auth/http/session_controller.h"
 #include "auth/http/signup_controller.h"
 #include "auth/password/pbkdf2_password_hasher.h"
@@ -53,6 +54,7 @@ int main(int argc, char* argv[]) {
         auth::http::register_health_routes();
         auth::http::register_signup_routes(database, hasher);
         auth::http::register_login_routes(first_factor, secure_cookie);
+        auth::http::register_recovery_routes(database, secure_cookie);
         auth::http::register_session_routes(database, secure_cookie);
         drogon::app().run();
     } catch (const std::exception&) {

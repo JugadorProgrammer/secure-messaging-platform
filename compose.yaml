@@ -19,6 +19,7 @@ services:
       - ./db/002_recovery_codes.sql:/docker-entrypoint-initdb.d/002_recovery_codes.sql:ro
       - ./db/003_login_challenges.sql:/docker-entrypoint-initdb.d/003_login_challenges.sql:ro
       - ./db/004_auth_sessions.sql:/docker-entrypoint-initdb.d/004_auth_sessions.sql:ro
+      - ./db/005_recovery_challenges.sql:/docker-entrypoint-initdb.d/005_recovery_challenges.sql:ro
 
     healthcheck:
       test:

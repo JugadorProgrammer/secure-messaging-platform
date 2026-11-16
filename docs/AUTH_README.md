@@ -567,3 +567,32 @@ docker compose exec -T postgres sh -c \
 `-DAUTH_ENABLE_DB_INTEGRATION_TESTS=ON` и выполните
 `ctest --test-dir build -R auth_session_repository --output-on-failure`
 с настроенным подключением к тестовой PostgreSQL.
+
+
+## AUTH-22. Вход по коду восстановления
+
+`POST /auth/login/recovery-code` принимает JSON `{"code":"..."}` и cookie
+`auth_recovery_pending`. Для уже существующего клиента FRONT доступен
+`POST /confirmDisposableCode` с тем же контрактом.
+
+Успешный ответ — `204` с полной cookie `session` и удалением промежуточной cookie.
+Неверный или использованный код, отсутствующая или просроченная попытка входа
+возвращают `401 INVALID_RECOVERY_CODE`. При ошибке записи в БД вся транзакция
+откатывается, а AUTH возвращает `503 RECOVERY_UNAVAILABLE`.
+
+### Стык с AUTH-20
+
+После проверки email-кода вызовите `auth::services::create_recovery_challenge(tx, user_id)`
+из `auth/services/recovery_factor.h` в той же транзакции, в которой погашается
+email-код. `user_id` — внутренний UUID пользователя. После коммита передайте
+результат в HttpOnly-cookie `auth_recovery_pending` с путём `/`,
+`SameSite=Lax`, `Max-Age=300` и настройкой `AUTH_COOKIE_SECURE` как у
+`auth_pending`. На этом этапе можно удалить cookie `auth_pending`.
+
+Новый том PostgreSQL получает миграцию автоматически. Для существующего тома:
+
+```bash
+docker compose exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < db/005_recovery_challenges.sql
+```
