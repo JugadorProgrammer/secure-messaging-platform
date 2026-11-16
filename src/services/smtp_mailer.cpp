@@ -54,7 +54,7 @@ void set_option(CURL* client, CURLoption option, T value) {
 
 std::size_t read_payload(char* buffer, std::size_t size, std::size_t count, void* data) {
     auto& remaining = *static_cast<std::string_view*>(data);
-    const auto bytes = std::min(size * count, remaining.size());
+    const auto bytes = (std::min)(size * count, remaining.size());
     if (bytes != 0) {
         std::memcpy(buffer, remaining.data(), bytes);
         remaining.remove_prefix(bytes);

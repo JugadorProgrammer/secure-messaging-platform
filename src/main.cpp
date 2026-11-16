@@ -18,6 +18,7 @@
 #include "auth/repositories/database.h"
 #include "auth/services/first_factor.h"
 #include "auth/services/smtp_mailer.h"
+#include "auth/http/email_factor_controller.h"
 
 int main(int argc, char* argv[]) {
     auto hasher = std::make_shared<auth::password::Pbkdf2PasswordHasher>();
@@ -55,6 +56,7 @@ int main(int argc, char* argv[]) {
         auth::http::register_health_routes();
         auth::http::register_signup_routes(database, hasher);
         auth::http::register_login_routes(first_factor, secure_cookie);
+        auth::http::register_email_factor_routes(database, secure_cookie);
         auth::http::register_password_reset_routes(password_reset, secure_cookie);
         auth::http::register_recovery_routes(database, secure_cookie);
         auth::http::register_session_routes(database, secure_cookie);
