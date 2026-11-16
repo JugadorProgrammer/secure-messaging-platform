@@ -121,10 +121,40 @@ std::optional<models::User> UserRepository::find_by_email(
 }
 
 
+std::vector<UserSummary> UserRepository::list_users() const {
+    const auto result = client_->execSqlSync(
+        R"(
+            SELECT u.login, u.email,
+                CASE
+                    WHEN bool_or(r.code = 'admin') THEN 'admin'
+                    WHEN bool_or(r.code = 'user') THEN 'user'
+                END AS role
+            FROM users u
+            LEFT JOIN user_roles ur ON u.id = ur.user_id
+            LEFT JOIN roles r ON r.id = ur.role_id
+            GROUP BY u.id
+            ORDER BY lower(u.login)
+        )"
+    );
+
+    std::vector<UserSummary> users;
+    users.reserve(result.size());
+    for (const auto& row : result) {
+        const auto role = row["role"];
+        users.push_back(UserSummary{
+            row["login"].as<std::string>(),
+            row["email"].as<std::string>(),
+            role.isNull() ? std::nullopt : std::optional{role.as<std::string>()}
+        });
+    }
+    return users;
+}
+
 std::optional<std::string> UserRepository::create_user(
     std::string_view login,
     std::string_view email,
-    std::string_view password_hash
+    std::string_view password_hash,
+    std::string_view role
 ) const {
     const auto result = client_->execSqlSync(
         R"(
@@ -135,11 +165,11 @@ std::optional<std::string> UserRepository::create_user(
                 RETURNING id
             )
             INSERT INTO user_roles (user_id, role_id)
-            SELECT id, (SELECT id FROM roles WHERE code = 'user')
+            SELECT id, (SELECT id FROM roles WHERE code = $4)
             FROM new_user
             RETURNING user_id::text AS id
         )",
-        std::string(login), std::string(email), std::string(password_hash)
+        std::string(login), std::string(email), std::string(password_hash), std::string(role)
     );
 
     if (result.empty()) {

@@ -18,21 +18,6 @@
 
 namespace auth::http {
 
-namespace {
-
-constexpr std::size_t kMaxQueuedSessionRequests = 64;
-using Callback = std::function<void(const drogon::HttpResponsePtr&)>;
-
-trantor::ConcurrentTaskQueue& session_workers() {
-    static trantor::ConcurrentTaskQueue workers(2, "auth-session");
-    return workers;
-}
-
-drogon::HttpResponsePtr sessions_unavailable() {
-    return make_error_response(drogon::k503ServiceUnavailable, "SESSIONS_UNAVAILABLE",
-                               "Session service temporarily unavailable");
-}
-
 std::string_view bearer_token(std::string_view header) {
     const auto split = header.find(' ');
     if (split == std::string_view::npos) {
@@ -54,6 +39,21 @@ std::string_view bearer_token(std::string_view header) {
     }
     const auto last = header.find_last_not_of(" \t");
     return header.substr(first, last - first + 1);
+}
+
+namespace {
+
+constexpr std::size_t kMaxQueuedSessionRequests = 64;
+using Callback = std::function<void(const drogon::HttpResponsePtr&)>;
+
+trantor::ConcurrentTaskQueue& session_workers() {
+    static trantor::ConcurrentTaskQueue workers(2, "auth-session");
+    return workers;
+}
+
+drogon::HttpResponsePtr sessions_unavailable() {
+    return make_error_response(drogon::k503ServiceUnavailable, "SESSIONS_UNAVAILABLE",
+                               "Session service temporarily unavailable");
 }
 
 drogon::HttpResponsePtr introspection_response(

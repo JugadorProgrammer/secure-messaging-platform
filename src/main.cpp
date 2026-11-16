@@ -12,6 +12,7 @@
 #include "auth/http/recovery_controller.h"
 #include "auth/http/session_controller.h"
 #include "auth/http/signup_controller.h"
+#include "auth/http/users_controller.h"
 #include "auth/password/pbkdf2_password_hasher.h"
 #include "auth/repositories/database.h"
 #include "auth/services/first_factor.h"
@@ -56,6 +57,7 @@ int main(int argc, char* argv[]) {
         auth::http::register_login_routes(first_factor, secure_cookie);
         auth::http::register_recovery_routes(database, secure_cookie);
         auth::http::register_session_routes(database, secure_cookie);
+        auth::http::register_users_routes(database, hasher);
         drogon::app().run();
     } catch (const std::exception&) {
         std::cerr << "AUTH initialization failed\n";
