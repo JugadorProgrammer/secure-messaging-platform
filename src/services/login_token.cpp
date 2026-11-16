@@ -6,6 +6,8 @@
 
 #include <algorithm>
 #include <array>
+#include <cstdint>
+#include <limits>
 #include <stdexcept>
 
 namespace auth::services {
@@ -34,6 +36,20 @@ std::string generate_login_token() {
         throw std::runtime_error("Login token generation failed");
     }
     return to_hex(bytes);
+}
+
+std::string generate_email_code() {
+    constexpr std::uint32_t range = 1000000;
+    constexpr auto limit = std::numeric_limits<std::uint32_t>::max() / range * range;
+    std::uint32_t value;
+    do {
+        if (RAND_bytes(reinterpret_cast<unsigned char*>(&value), sizeof(value)) != 1) {
+            throw std::runtime_error("Email code generation failed");
+        }
+    } while (value >= limit);
+
+    auto code = std::to_string(value % range);
+    return std::string(6 - code.size(), '0') + code;
 }
 
 bool is_login_token(std::string_view token) {

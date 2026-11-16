@@ -48,6 +48,19 @@ std::optional<std::string> complete_recovery_factor(
         }
 
         try {
+            const auto account = transaction->execSqlSync(
+                R"(
+                    SELECT u.id
+                    FROM users u JOIN recovery_challenges c ON c.user_id = u.id
+                    WHERE c.token_hash = $1 AND c.expires_at > now()
+                    FOR UPDATE OF u
+                )", pending_hash
+            );
+            if (account.empty()) {
+                transaction->rollback();
+                return std::nullopt;
+            }
+
             const auto challenge = transaction->execSqlSync(
                 R"(
                     DELETE FROM recovery_challenges

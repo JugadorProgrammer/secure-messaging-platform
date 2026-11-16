@@ -21,8 +21,10 @@ public:
 
     // Отправляет шестизначный код. При ошибке выбрасывает исключение.
     void send_verification_code(std::string_view recipient, std::string_view code) const;
+    void send_password_reset_code(std::string_view recipient, std::string_view code) const;
 
 private:
+    void send_code(std::string_view recipient, std::string_view code, std::string_view purpose) const;
     SmtpSettings settings_;
 };
 

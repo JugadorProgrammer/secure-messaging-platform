@@ -8,7 +8,6 @@
 #include <string_view>
 
 #include "auth/password/i_password_hasher.h"
-#include "auth/repositories/user_repository.h"
 #include "auth/services/login_token.h"
 #include "auth/services/smtp_mailer.h"
 
@@ -27,7 +26,6 @@ public:
 
 private:
     drogon::orm::DbClientPtr database_;
-    repositories::UserRepository users_;
     std::shared_ptr<password::IPasswordHasher> hasher_;
     SmtpMailer mailer_;
     std::string dummy_password_hash_;

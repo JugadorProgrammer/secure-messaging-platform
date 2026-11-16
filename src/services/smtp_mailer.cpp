@@ -98,6 +98,14 @@ SmtpMailer::SmtpMailer(SmtpSettings settings) : settings_(std::move(settings)) {
 }
 
 void SmtpMailer::send_verification_code(std::string_view recipient, std::string_view code) const {
+    send_code(recipient, code, "verification");
+}
+
+void SmtpMailer::send_password_reset_code(std::string_view recipient, std::string_view code) const {
+    send_code(recipient, code, "password reset");
+}
+
+void SmtpMailer::send_code(std::string_view recipient, std::string_view code, std::string_view purpose) const {
     if (settings_.url.empty()) {
         throw std::runtime_error("SMTP is not configured");
     }
@@ -109,9 +117,9 @@ void SmtpMailer::send_verification_code(std::string_view recipient, std::string_
     const auto from = "<" + settings_.from + ">";
     const auto to = "<" + std::string(recipient) + ">";
     const auto payload = "Date: " + smtp_date() + "\r\nFrom: " + from + "\r\nTo: " + to +
-        "\r\nSubject: Secure Messaging Platform verification code"
+        "\r\nSubject: Secure Messaging Platform " + std::string(purpose) + " code"
         "\r\nMIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\n"
-        "\r\nYour verification code is " + std::string(code) + ".\r\n";
+        "\r\nYour " + std::string(purpose) + " code is " + std::string(code) + ".\r\n";
     std::string_view payload_remaining(payload);
 
     std::unique_ptr<curl_slist, decltype(&curl_slist_free_all)> recipients(
