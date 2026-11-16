@@ -13,7 +13,8 @@ namespace auth::services {
 std::optional<std::vector<std::string>> register_user(
     const drogon::orm::DbClientPtr& database,
     password::IPasswordHasher& hasher,
-    const validation::RegistrationData& data
+    const validation::RegistrationData& data,
+    std::string_view role
 ) {
     const auto password_hash = hasher.hash_password(data.password);
     auto recovery_codes = generate_recovery_codes();
@@ -30,7 +31,7 @@ std::optional<std::vector<std::string>> register_user(
 
         try {
             const repositories::UserRepository users(transaction);
-            const auto user_id = users.create_user(data.login, data.email, password_hash);
+            const auto user_id = users.create_user(data.login, data.email, password_hash, role);
             if (!user_id) {
                 transaction->rollback();
                 return std::nullopt;

@@ -6,10 +6,17 @@
 #include <optional>
 #include <string>
 #include <string_view>
+#include <vector>
 
 #include "auth/models/user.h"
 
 namespace auth::repositories {
+
+struct UserSummary {
+    std::string login;
+    std::string email;
+    std::optional<std::string> role;
+};
 
 class UserRepository {
 public:
@@ -29,12 +36,15 @@ public:
         std::string_view email
     ) const;
 
-    // Создаёт обычного пользователя и возвращает его UUID. Конфликт логина
+    [[nodiscard]] std::vector<UserSummary> list_users() const;
+
+    // Создаёт пользователя с заданной ролью и возвращает его UUID. Конфликт логина
     // или email возвращается как std::nullopt.
     [[nodiscard]] std::optional<std::string> create_user(
         std::string_view login,
         std::string_view email,
-        std::string_view password_hash
+        std::string_view password_hash,
+        std::string_view role = "user"
     ) const;
 
 private:
