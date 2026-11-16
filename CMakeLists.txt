@@ -19,8 +19,10 @@ add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
     src/http/auth_controller.cpp
+    src/http/signup_controller.cpp
     src/services/smtp_mailer.cpp
     src/services/first_factor.cpp
+    src/services/registration.cpp
     src/http/error_response.cpp
     src/repositories/database.cpp
     src/password/pbkdf2_password_hasher.cpp

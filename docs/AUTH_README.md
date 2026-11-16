@@ -504,3 +504,30 @@ curl -i http://127.0.0.1:8080/login \
 одной операцией, например `DELETE … RETURNING user_id`, с последующим переходом
 на этап одноразового recovery code. В AUTH-19 создаётся только промежуточный
 идентификатор. Токен полной сессии выдаётся после третьего этапа.
+
+
+## AUTH-16. Регистрация пользователя
+
+`POST /auth/signup` и `POST /signup` принимают JSON с полями `login`, `email` и
+`password`. Пользователь получает роль `user`. AUTH возвращает `201 Created`
+и JSON-массив из 10 одноразовых кодов. Коды выдаются после успешного
+сохранения пользователя, роли и хэшей всех кодов в одной транзакции.
+
+```bash
+curl -i http://127.0.0.1:8080/auth/signup \
+  -H 'Content-Type: application/json' \
+  -d '{"login":"authdemo","email":"authdemo@example.test","password":"DemoPassword123!"}'
+```
+
+Запрос с некорректными полями возвращает `400 INVALID_REQUEST`,
+повтор логина или email без учёта регистра — `409 ACCOUNT_ALREADY_EXISTS`.
+При ошибке записи AUTH возвращает `503 SIGNUP_UNAVAILABLE`.
+
+Новый том PostgreSQL получает миграцию кодов восстановления при запуске.
+Для существующего тома примените её из корня AUTH:
+
+```bash
+docker compose exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < db/002_recovery_codes.sql
+```
