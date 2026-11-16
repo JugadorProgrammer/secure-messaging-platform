@@ -9,6 +9,7 @@
 
 #include "auth/http/auth_controller.h"
 #include "auth/http/health_controller.h"
+#include "auth/http/session_controller.h"
 #include "auth/http/signup_controller.h"
 #include "auth/password/pbkdf2_password_hasher.h"
 #include "auth/repositories/database.h"
@@ -46,11 +47,13 @@ int main(int argc, char* argv[]) {
             database, hasher,
             auth::services::SmtpMailer(auth::services::smtp_settings_from_environment())
         );
-        const char* secure_cookie = std::getenv("AUTH_COOKIE_SECURE");
+        const char* cookie_config = std::getenv("AUTH_COOKIE_SECURE");
+        const bool secure_cookie = cookie_config == nullptr ||
+            std::string_view(cookie_config) != "false";
         auth::http::register_health_routes();
         auth::http::register_signup_routes(database, hasher);
-        auth::http::register_login_routes(first_factor,
-            secure_cookie == nullptr || std::string_view(secure_cookie) != "false");
+        auth::http::register_login_routes(first_factor, secure_cookie);
+        auth::http::register_session_routes(database, secure_cookie);
         drogon::app().run();
     } catch (const std::exception&) {
         std::cerr << "AUTH initialization failed\n";
