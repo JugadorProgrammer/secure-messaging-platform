@@ -9,6 +9,7 @@
 
 #include "auth/http/auth_controller.h"
 #include "auth/http/health_controller.h"
+#include "auth/http/password_reset_controller.h"
 #include "auth/http/recovery_controller.h"
 #include "auth/http/session_controller.h"
 #include "auth/http/signup_controller.h"
@@ -45,16 +46,16 @@ int main(int argc, char* argv[]) {
         }
 
         auto database = auth::repositories::create_database_client();
-        auto first_factor = std::make_shared<auth::services::FirstFactor>(
-            database, hasher,
-            auth::services::SmtpMailer(auth::services::smtp_settings_from_environment())
-        );
+        const auth::services::SmtpMailer mailer(auth::services::smtp_settings_from_environment());
+        auto first_factor = std::make_shared<auth::services::FirstFactor>(database, hasher, mailer);
+        auto password_reset = std::make_shared<auth::services::PasswordReset>(database, hasher, mailer);
         const char* cookie_config = std::getenv("AUTH_COOKIE_SECURE");
         const bool secure_cookie = cookie_config == nullptr ||
             std::string_view(cookie_config) != "false";
         auth::http::register_health_routes();
         auth::http::register_signup_routes(database, hasher);
         auth::http::register_login_routes(first_factor, secure_cookie);
+        auth::http::register_password_reset_routes(password_reset, secure_cookie);
         auth::http::register_recovery_routes(database, secure_cookie);
         auth::http::register_session_routes(database, secure_cookie);
         auth::http::register_users_routes(database, hasher);

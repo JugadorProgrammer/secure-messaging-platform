@@ -588,6 +588,30 @@ docker compose exec -T postgres sh -c \
 с настроенным подключением к тестовой PostgreSQL.
 
 
+## Восстановление пароля и блокировка входа (#19)
+
+Все запросы выполняются методом `POST` с JSON. При обращении через COORD добавьте префикс `/api`.
+
+| Маршрут AUTH | Тело и cookie | Ответ `204` |
+|---|---|---|
+| `/auth/password/restore` | `{"email":"user@example.test"}` | `auth_reset_pending` на 5 минут. Код для зарегистрированного адреса отправляется по SMTP. |
+| `/auth/password/confirm` | `{"code":"123456"}` и `auth_reset_pending` | Одноразовая cookie `auth_reset_grant` на 5 минут. Первая cookie очищается. |
+| `/auth/password/confirm` | `{"password":"NewPassword123!"}` и `auth_reset_grant` | Новый пароль сохранён, cookie очищена, старые сессии и незавершённые попытки входа отозваны. |
+
+Первый запрос возвращает одинаковый статус для известного и неизвестного адреса. Письмо отправляется после ответа. На одну учётную запись можно отправлять письмо раз в минуту и вводить до пяти кодов на одну попытку. Неверный или просроченный код, отсутствующая cookie и использованный токен возвращают `401`. При смене пароля пользователь проходит обычный вход заново.
+
+AUTH также принимает `/restorePassword`, `/confirmRestoreCode` и `/confirmNewPassword` с теми же телами и cookie. При интеграции прямого клиента FRONT нужно передать `Set-Cookie` от `/restorePassword` в браузер, а `Cookie` из браузера — в `/confirmRestoreCode`. Последний шаг уже передаёт cookie в AUTH.
+
+Пять неверных паролей подряд блокируют вход для учётной записи на 15 минут. Счётчик сбрасывается при успешной проверке пароля, смене пароля или паузе в 15 минут между ошибками. Во время блокировки вход возвращает `401 INVALID_CREDENTIALS`. Восстановление пароля остаётся доступным.
+
+Новый том PostgreSQL получает миграцию автоматически. Для существующей БД примените её перед обновлением AUTH из корня репозитория.
+
+```bash
+docker compose exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < db/006_password_reset.sql
+```
+
 ## AUTH-22. Вход по коду восстановления
 
 `POST /auth/login/recovery-code` принимает JSON `{"code":"..."}` и cookie
@@ -603,7 +627,9 @@ docker compose exec -T postgres sh -c \
 
 После проверки email-кода вызовите `auth::services::create_recovery_challenge(tx, user_id)`
 из `auth/services/recovery_factor.h` в той же транзакции, в которой погашается
-email-код. `user_id` — внутренний UUID пользователя. После коммита передайте
+email-код. `user_id` — внутренний UUID пользователя. Перед погашением email-кода
+заблокируйте строку пользователя через `FOR UPDATE`, чтобы сброс пароля и смена
+этапа входа обрабатывались последовательно. После коммита передайте
 результат в HttpOnly-cookie `auth_recovery_pending` с путём `/`,
 `SameSite=Lax`, `Max-Age=300` и настройкой `AUTH_COOKIE_SECURE` как у
 `auth_pending`. На этом этапе можно удалить cookie `auth_pending`.

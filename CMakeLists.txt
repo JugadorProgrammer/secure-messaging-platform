@@ -20,6 +20,7 @@ add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
     src/http/auth_controller.cpp
+    src/http/password_reset_controller.cpp
     src/http/recovery_controller.cpp
     src/http/session_controller.cpp
     src/http/signup_controller.cpp
@@ -27,6 +28,7 @@ add_executable(smp_auth
     src/services/smtp_mailer.cpp
     src/services/first_factor.cpp
     src/services/login_token.cpp
+    src/services/password_reset.cpp
     src/services/registration.cpp
     src/services/recovery_factor.cpp
     src/http/error_response.cpp
