@@ -531,3 +531,39 @@ docker compose exec -T postgres sh -c \
   'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
   < db/002_recovery_codes.sql
 ```
+
+
+## AUTH-21. Сессии и проверка доступа для COORD
+
+Полная сессия живёт 8 часов. В AUTH хранится хэш токена. Внутренние связи
+используют UUID, а COORD получает постоянный числовой `user_id`.
+
+COORD передаёт токен в `POST /internal/introspect` в JSON-поле `token`.
+Ответ для действующей полной сессии:
+
+```json
+{"active":true,"stage":"full","user_id":1,"login":"exampleuser","role":"user"}
+```
+
+Для неизвестного, промежуточного, просроченного или отозванного токена
+возвращается `200` с телом `{"active":false}`. Маршрут используется внутри
+контура AUTH и COORD. `POST /auth/logout` отзывает указанную Bearer-сессию,
+возвращает `204` и очищает cookie `session`.
+
+AUTH-22 сможет создавать полную сессию методом
+`SessionRepository::create_full_session`. Чтобы погасить recovery code и
+создать сессию атомарно, используйте одну транзакцию для обеих операций.
+
+На новом томе Docker Compose применяет миграцию автоматически. Для
+существующего тома:
+
+```bash
+docker compose exec -T postgres sh -c \
+  'psql -v ON_ERROR_STOP=1 -U "$POSTGRES_USER" -d "$POSTGRES_DB"' \
+  < db/004_auth_sessions.sql
+```
+
+Для запуска теста репозитория сессий соберите AUTH с
+`-DAUTH_ENABLE_DB_INTEGRATION_TESTS=ON` и выполните
+`ctest --test-dir build -R auth_session_repository --output-on-failure`
+с настроенным подключением к тестовой PostgreSQL.

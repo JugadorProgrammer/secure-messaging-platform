@@ -13,18 +13,22 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 # Поиск установленного фреймворка Drogon
 find_package(Drogon CONFIG REQUIRED)
 find_package(CURL 7.85 REQUIRED)
+find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 
 # Исполняемый файл сервиса AUTH
 add_executable(smp_auth
     src/main.cpp
     src/http/health_controller.cpp
     src/http/auth_controller.cpp
+    src/http/session_controller.cpp
     src/http/signup_controller.cpp
     src/services/smtp_mailer.cpp
     src/services/first_factor.cpp
+    src/services/login_token.cpp
     src/services/registration.cpp
     src/http/error_response.cpp
     src/repositories/database.cpp
+    src/repositories/session_repository.cpp
     src/password/pbkdf2_password_hasher.cpp
     src/validation/registration_validator.cpp
     src/repositories/user_repository.cpp
@@ -126,10 +130,19 @@ if(AUTH_ENABLE_DB_INTEGRATION_TESTS)
         NAME auth_user_repository
         COMMAND auth_user_repository_test
     )
+
+    add_executable(auth_session_repository_test
+        tests/session_repository_integration_test.cpp
+        src/repositories/database.cpp
+        src/repositories/session_repository.cpp
+        src/services/login_token.cpp
+    )
+    target_include_directories(auth_session_repository_test PRIVATE ${CMAKE_CURRENT_SOURCE_DIR}/include)
+    target_link_libraries(auth_session_repository_test PRIVATE Drogon::Drogon OpenSSL::Crypto)
+    add_test(NAME auth_session_repository COMMAND auth_session_repository_test)
 endif()
 endif()
 
-find_package(OpenSSL REQUIRED COMPONENTS Crypto)
 target_sources(smp_auth PRIVATE src/services/recovery_codes.cpp)
 target_sources(smp_auth PRIVATE src/repositories/recovery_codes_repository.cpp)
 target_link_libraries(smp_auth PRIVATE OpenSSL::Crypto)

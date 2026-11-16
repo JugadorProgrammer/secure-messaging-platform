@@ -9,16 +9,13 @@
 
 #include "auth/password/i_password_hasher.h"
 #include "auth/repositories/user_repository.h"
+#include "auth/services/login_token.h"
 #include "auth/services/smtp_mailer.h"
 
 namespace auth::services {
 
 inline constexpr std::string_view kPendingLoginCookie = "auth_pending";
 inline constexpr int kLoginChallengeLifetimeSeconds = 300;
-
-// Эти два преобразования также используются при подтверждении email-кода.
-std::string login_token_hash(std::string_view token);
-std::string login_email_code_hash(std::string_view token, std::string_view code);
 
 class FirstFactor {
 public:
