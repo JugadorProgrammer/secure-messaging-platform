@@ -3,7 +3,6 @@
 import {useEffect, useState} from 'react';
 import type {Dispatch, SetStateAction} from 'react';
 
-import {Result} from '@/application/Result';
 
 import {confirmRestoreCode, restorePassword} from '@/presentation/api/passwordRecovery';
 import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
@@ -62,7 +61,7 @@ export function usePasswordRecoveryCodeForm({
     setIsSubmitting(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 
@@ -78,7 +77,7 @@ export function usePasswordRecoveryCodeForm({
     setIsResending(false);
 
     if (!result.isSuccess) {
-      show(Result.message(result));
+      show(result.error.message);
       return;
     }
 

@@ -1,0 +1,73 @@
+import type {Meta, StoryObj} from '@storybook/nextjs-vite';
+import {mocked} from 'storybook/test';
+
+import type {EncryptionMethod} from '@/domain/encryptionMethod';
+
+import {Result} from '@/application/Result';
+
+import {
+  getAllEncryptionMethods,
+  setEncryptionMethodAvailability,
+} from '@/presentation/api/encryptionMethods';
+
+import {AllEncryptionMethodsPanel} from './AllEncryptionMethodsPanel';
+
+const meta = {
+  title: 'AllEncryptionMethodsPanel',
+  component: AllEncryptionMethodsPanel,
+  parameters: {
+    layout: 'padded',
+  },
+} satisfies Meta<typeof AllEncryptionMethodsPanel>;
+
+export default meta;
+
+type Story = StoryObj<typeof meta>;
+
+export const List: Story = {
+  name: 'Список',
+};
+
+export const Empty: Story = {
+  name: 'Пустой',
+  beforeEach() {
+    mocked(getAllEncryptionMethods).mockResolvedValue(Result.success([]));
+  },
+};
+
+export const Loading: Story = {
+  name: 'Скелетон',
+  beforeEach() {
+    mocked(getAllEncryptionMethods).mockImplementation(
+      () => new Promise<Result<EncryptionMethod[]>>(() => {}),
+    );
+  },
+};
+
+export const Failed: Story = {
+  name: 'Не загрузилось',
+  beforeEach() {
+    mocked(getAllEncryptionMethods).mockResolvedValue(Result.error(new Error('down')));
+
+    const originalSetTimeout = window.setTimeout;
+
+    window.setTimeout = ((handler: TimerHandler, timeout?: number) => {
+      const delay = typeof timeout === 'number' && timeout >= 1000 ? 0 : timeout;
+
+      return originalSetTimeout(handler, delay);
+    }) as typeof window.setTimeout;
+
+    return () => {
+      window.setTimeout = originalSetTimeout;
+    };
+  },
+};
+
+export const ToggleFailed: Story = {
+  name: 'Ошибка переключения',
+  beforeEach() {
+    mocked(setEncryptionMethodAvailability).mockResolvedValue(
+      Result.error(new Error('Не удалось изменить доступность метода шифрования.')),
+    );
+  },
+};

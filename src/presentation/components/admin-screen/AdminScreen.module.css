@@ -1,0 +1,43 @@
+.admin-screen {
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+  min-height: 100vh;
+  padding: 1.5rem;
+}
+
+.admin-screen__title {
+  margin: 0;
+  font-size: 1.5rem;
+  font-weight: 600;
+}
+
+.admin-screen__widget {
+  display: block;
+  border-radius: 1rem;
+  background: var(--gray-200);
+  padding: 1.5rem;
+}
+
+.admin-screen__role {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-screen__role-title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.admin-screen__role-name {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.admin-screen__role-description {
+  margin: 0;
+  color: var(--black-700);
+}

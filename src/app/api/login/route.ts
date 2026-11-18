@@ -1,32 +1,28 @@
 import {NextResponse} from 'next/server';
 
-import type {LoginCredentials} from '@/application/IAuthGateway';
+import type {LoginCredentialsRequest} from '@/application/ILoginService/LoginService/LoginCredentialsRequest';
 
 import {appConfig} from '@/appconfig';
-import {loginCredentialsSchema} from '@/infrastructure/http/loginCredentialsSchema';
+import {loginCredentialsRequestSchema} from '@/infrastructure/http/LoginService/loginCredentialsRequestSchema';
 import {writeSetCookies} from '@/infrastructure/http/setCookies';
 
 import {compose} from '@/presentation/access/auth';
 import {castFromJson} from '@/presentation/access/castFromJson';
+import {handleErrors} from '@/presentation/access/handleErrors';
 
 export const POST = compose(
-  castFromJson(loginCredentialsSchema),
-  async (credentials: LoginCredentials) => {
-    try {
-      const result = await appConfig.resolve('loginService').login(credentials);
+  castFromJson(loginCredentialsRequestSchema),
+  handleErrors(async (loginCredentialsRequest: LoginCredentialsRequest) => {
+    const result = await appConfig.resolve('loginService').login(loginCredentialsRequest);
 
-      if (!result.isSuccess) {
-        console.error(result.error);
-        return new Response(null, {status: 503});
-      }
-
-      const response = new NextResponse(null, {status: 204});
-      writeSetCookies(response, result.success);
-
-      return response;
-    } catch (error) {
-      console.error(error);
+    if (!result.isSuccess) {
+      console.error(result.error);
       return new Response(null, {status: 503});
     }
-  },
+
+    const response = new NextResponse(null, {status: 204});
+    writeSetCookies(response, result.success);
+
+    return response;
+  }),
 );

@@ -1,0 +1,44 @@
+.message-journal-widget {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message-journal-widget__title {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 600;
+}
+
+.message-journal-widget__bars {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+
+.message-journal-widget__bar {
+  display: block;
+  height: 4.5rem;
+  background: var(--gray-300);
+  border-radius: 0.5rem;
+}
+
+.message-journal-widget__failed {
+  background: var(--gray-300);
+  border-radius: 0.5rem;
+  min-height: 4.5rem;
+}
+
+.message-journal-widget__messages {
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+  min-height: 8rem;
+  border-radius: 0.5rem;
+  background: var(--gray-100);
+  padding: 1rem;
+}
+
+.message-journal-widget__empty {
+  margin: 0;
+}

@@ -1,13 +1,10 @@
 'use client';
 
-import {useState} from 'react';
 import type {ChangeEvent, FormEvent} from 'react';
 
-import {Result} from '@/application/Result';
-
-import {confirmNewPassword} from '@/presentation/api/passwordRecovery';
 import {Notification} from '@/presentation/components/notification/Notification';
-import {useScreenNotice} from '@/presentation/notice/useScreenNotice';
+
+import {useNewPasswordForm} from './useNewPasswordForm';
 
 import styles from './NewPasswordForm.module.css';
 
@@ -16,9 +13,7 @@ type NewPasswordFormProps = {
 };
 
 export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
-  const [password, setPassword] = useState('');
-  const {notice, show, dismiss} = useScreenNotice();
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const {password, setPassword, isSubmitting, notice, submit} = useNewPasswordForm({onSuccess});
 
   function handlePasswordChange(event: ChangeEvent<HTMLInputElement>): void {
     setPassword(event.target.value);
@@ -26,20 +21,7 @@ export function NewPasswordForm({onSuccess}: NewPasswordFormProps) {
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>): Promise<void> {
     event.preventDefault();
-    setIsSubmitting(true);
-    dismiss();
-
-    const result = await confirmNewPassword(password);
-
-    setPassword('');
-    setIsSubmitting(false);
-
-    if (!result.isSuccess) {
-      show(Result.message(result));
-      return;
-    }
-
-    onSuccess();
+    await submit();
   }
 
   return (

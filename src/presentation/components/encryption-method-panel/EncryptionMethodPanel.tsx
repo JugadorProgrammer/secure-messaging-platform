@@ -8,23 +8,23 @@ import {useEncryptionMethodPanel} from './useEncryptionMethodPanel';
 import styles from './EncryptionMethodPanel.module.css';
 
 export function EncryptionMethodPanel() {
-  const state = useEncryptionMethodPanel();
+  const {encryptionMethods, isEncryptionMethodsLoadFailed} = useEncryptionMethodPanel();
 
   return (
     <div className={styles['encryption-method-panel']}>
       <h2 className={styles['encryption-method-panel__title']}>Методы шифрования</h2>
-      {state.isFailed ? (
+      {isEncryptionMethodsLoadFailed ? (
         <div className={styles['encryption-method-panel__failed']} />
       ) : null}
-      {state.methods === null && !state.isFailed ? (
+      {encryptionMethods === null && !isEncryptionMethodsLoadFailed ? (
         <div className={styles['encryption-method-panel__bars']} aria-busy="true">
           <span className={styles['encryption-method-panel__bar']} />
           <span className={styles['encryption-method-panel__bar']} />
           <span className={styles['encryption-method-panel__bar']} />
         </div>
       ) : null}
-      {state.methods !== null ? <EncryptionMethodList methods={state.methods} /> : null}
-      {state.isFailed ? (
+      {encryptionMethods !== null ? <EncryptionMethodList methods={encryptionMethods} /> : null}
+      {isEncryptionMethodsLoadFailed ? (
         <Notification message="Не удалось загрузить список методов шифрования." />
       ) : null}
     </div>
