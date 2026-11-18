@@ -86,7 +86,13 @@ func (m *memStore) GetMessage(context.Context, int64) (*ports.Message, error) {
 	return nil, ports.ErrNotFound
 }
 
+// ListMessages возвращает пустой список: маршрут списка проверяется до
+// хранилища, сообщений в заглушке нет.
 func (m *memStore) ListMessages(context.Context, *int64, int, int) ([]*ports.Message, error) {
+	return nil, nil
+}
+
+func (m *memStore) MessageByCiphertext(context.Context, string, []byte) (*ports.Message, error) {
 	return nil, ports.ErrNotFound
 }
 

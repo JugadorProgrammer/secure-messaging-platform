@@ -2,7 +2,10 @@ module github.com/JugadorProgrammer/secure-messaging-platform
 
 go 1.27
 
-require github.com/jackc/pgx/v5 v5.7.5
+require (
+	github.com/go-pdf/fpdf v0.9.0
+	github.com/jackc/pgx/v5 v5.7.5
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect

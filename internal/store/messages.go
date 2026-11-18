@@ -128,6 +128,29 @@ WHERE owner_id = $1 ORDER BY created_at DESC, id DESC LIMIT $2 OFFSET $3`, *owne
 	return msgList, nil
 }
 
+// MessageByCiphertext возвращает последнее сообщение метода method с данным
+// шифртекстом. Если такого нет — ports.ErrNotFound.
+//
+// Нужен расшифрованию Кузнечиком: фронт присылает ключ и шифртекст, а IV
+// хранится в сообщении.
+func (s *Store) MessageByCiphertext(ctx context.Context, method string, ciphertext []byte) (*ports.Message, error) {
+	rows, err := s.pool.Query(ctx, `SELECT `+messageColumns+` FROM messages
+WHERE ciphertext = $1 AND method = $2 ORDER BY id DESC LIMIT 1`, ciphertext, method)
+	if err != nil {
+		return nil, fmt.Errorf("store: message by ciphertext: %w", err)
+	}
+
+	m, err := pgx.CollectExactlyOneRow(rows, scanMessage)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return nil, ports.ErrNotFound
+	}
+	if err != nil {
+		return nil, fmt.Errorf("store: message by ciphertext: %w", err)
+	}
+
+	return m, nil
+}
+
 // SetDecryptMs записывает время последнего расшифрования. Если сообщения
 // нет — ports.ErrNotFound.
 func (s *Store) SetDecryptMs(ctx context.Context, id, ms int64) error {

@@ -241,3 +241,54 @@ func serveAuthn(t *testing.T, client *AccountsClient, token string) (*httptest.R
 
 	return rec, seen
 }
+
+// TestAuthnSessionCookie: фронт передаёт токен в cookie session, которую
+// ставит Сервис учётных записей.
+func TestAuthnSessionCookie(t *testing.T) {
+	tests := []struct {
+		name       string
+		cookie     *http.Cookie
+		header     string
+		wantStatus int
+		wantCalls  int
+	}{
+		{"токен в cookie", &http.Cookie{Name: SessionCookie, Value: "good-token"}, "", http.StatusOK, 1},
+		{"пустая cookie", &http.Cookie{Name: SessionCookie, Value: ""}, "", http.StatusUnauthorized, 0},
+		{"чужая cookie", &http.Cookie{Name: "theme", Value: "dark"}, "", http.StatusUnauthorized, 0},
+		{"неверный заголовок важнее cookie", &http.Cookie{Name: SessionCookie, Value: "good-token"}, "Token x",
+			http.StatusUnauthorized, 0},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			client, calls := stubAccounts(t, func(w http.ResponseWriter, _ *http.Request) {
+				writeSession(w, http.StatusOK, fullSession())
+			})
+
+			req := httptest.NewRequest(http.MethodGet, "/api/getAllMessages", http.NoBody)
+			req.AddCookie(tt.cookie)
+
+			if tt.header != "" {
+				req.Header.Set(headerAuthorization, tt.header)
+			}
+
+			rec := httptest.NewRecorder()
+
+			var seen Principal
+
+			Authn(client)(okHandler(&seen)).ServeHTTP(rec, req)
+
+			if rec.Code != tt.wantStatus {
+				t.Fatalf("status = %d, want %d (body %q)", rec.Code, tt.wantStatus, rec.Body.String())
+			}
+
+			if *calls != tt.wantCalls {
+				t.Errorf("introspect calls = %d, want %d", *calls, tt.wantCalls)
+			}
+
+			if tt.wantStatus == http.StatusOK && seen.Login != "ivanov" {
+				t.Errorf("principal = %+v, want ivanov", seen)
+			}
+		})
+	}
+}

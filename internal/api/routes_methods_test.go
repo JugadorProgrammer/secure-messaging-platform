@@ -7,20 +7,26 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/JugadorProgrammer/secure-messaging-platform/internal/auth"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/httpx"
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/methods"
-	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
 )
 
-// patchMethod отправляет PATCH /api/methods/{code} через собранный обработчик.
-func patchMethod(t *testing.T, h http.Handler, code, token, body string) *httptest.ResponseRecorder {
+const (
+	methodsListPath = "/api/getAllEncryptionMethods"
+	methodsSetPath  = "/api/setEncryptionMethodAvailability"
+)
+
+// setMethod отправляет POST /api/setEncryptionMethodAvailability. Токен
+// передаётся cookie session, как это делает интерфейс.
+func setMethod(t *testing.T, h http.Handler, token, body string) *httptest.ResponseRecorder {
 	t.Helper()
 
-	req := httptest.NewRequest(http.MethodPatch, "/api/methods/"+code, strings.NewReader(body))
+	req := httptest.NewRequest(http.MethodPost, methodsSetPath, strings.NewReader(body))
 	req.Header.Set("Content-Type", "application/json")
 
 	if token != "" {
-		req.Header.Set("Authorization", "Bearer "+token)
+		req.AddCookie(&http.Cookie{Name: auth.SessionCookie, Value: token})
 	}
 
 	rec := httptest.NewRecorder()
@@ -37,24 +43,24 @@ func TestMethodsGETIsPublic(t *testing.T) {
 	h := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), st, discardLogger())
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/methods", http.NoBody))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, methodsListPath, http.NoBody))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 (body %q)", rec.Code, rec.Body.String())
 	}
 
-	var got []methods.MethodDTO
+	var got []methods.EncryptionMethodDTO
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
 		t.Fatalf("decode body %q: %v", rec.Body.String(), err)
 	}
 
 	// Список отсортирован по коду: kuznyechik раньше rsa.
-	if len(got) != 2 || got[0].Code != ports.MethodKuznyechik || got[1].Code != ports.MethodRSA {
-		t.Errorf("body = %+v, want [kuznyechik rsa]", got)
+	if len(got) != 2 || got[0].Name != methods.NameKuznyechik || got[1].Name != methods.NameRSA {
+		t.Errorf("body = %+v, want [Кузнечик RSA-32768]", got)
 	}
 }
 
-func TestMethodsPATCHRequiresAdmin(t *testing.T) {
+func TestMethodsSetRequiresAdmin(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
@@ -72,20 +78,20 @@ func TestMethodsPATCHRequiresAdmin(t *testing.T) {
 
 	for _, tc := range cases {
 		t.Run(tc.name, func(t *testing.T) {
-			rec := patchMethod(t, h, "rsa", tc.token, `{"enabled":false}`)
+			rec := setMethod(t, h, tc.token, `{"name":"RSA-32768","enabled":false}`)
 			assertJSONError(t, rec, tc.status, tc.code)
 		})
 	}
 }
 
-func TestMethodsPATCHByAdmin(t *testing.T) {
+func TestMethodsSetByAdmin(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
 	st := newMemStore()
 	h := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), st, discardLogger())
 
-	rec := patchMethod(t, h, "rsa", adminToken, `{"enabled":false}`)
+	rec := setMethod(t, h, adminToken, `{"name":"RSA-32768","enabled":false}`)
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 (body %q)", rec.Code, rec.Body.String())
@@ -101,40 +107,40 @@ func TestMethodsPATCHByAdmin(t *testing.T) {
 
 	// Тот же метод в публичном списке теперь выключен.
 	rec = httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/methods", http.NoBody))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, methodsListPath, http.NoBody))
 
-	var got []methods.MethodDTO
+	var got []methods.EncryptionMethodDTO
 	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
 		t.Fatalf("decode body %q: %v", rec.Body.String(), err)
 	}
 
 	for _, m := range got {
-		if m.Code == ports.MethodRSA && m.Enabled {
-			t.Error("rsa остался включённым после PATCH")
+		if m.Name == methods.NameRSA && m.Enabled {
+			t.Error("RSA остался включённым после переключения")
 		}
 	}
 }
 
-func TestMethodsPATCHUnknownCode(t *testing.T) {
+func TestMethodsSetUnknownCode(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
 	h := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), newMemStore(), discardLogger())
 
-	rec := patchMethod(t, h, "gost", adminToken, `{"enabled":false}`)
+	rec := setMethod(t, h, adminToken, `{"name":"ГОСТ","enabled":false}`)
 
 	assertJSONError(t, rec, http.StatusNotFound, httpx.CodeNotFound)
 }
 
-func TestMethodsPATCHBodyLimit(t *testing.T) {
+func TestMethodsSetBodyLimit(t *testing.T) {
 	backend := stubAccounts(t)
 	defer backend.Close()
 
 	h := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), newMemStore(), discardLogger())
 
-	body := `{"enabled":false,"pad":"` + strings.Repeat("x", int(methods.MaxPatchBodyBytes)+1) + `"}`
+	body := `{"name":"rsa","enabled":false,"pad":"` + strings.Repeat("x", int(methods.MaxSetBodyBytes)+1) + `"}`
 
-	rec := patchMethod(t, h, "rsa", adminToken, body)
+	rec := setMethod(t, h, adminToken, body)
 
 	assertJSONError(t, rec, http.StatusRequestEntityTooLarge, httpx.CodePayloadTooLarge)
 }
@@ -146,28 +152,48 @@ func TestMethodRoutesAreNotRegisteredWithoutStore(t *testing.T) {
 	h := New(testConfig(t, func(env map[string]string) { env["ACCOUNTS_URL"] = backend.URL }), nil, discardLogger())
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/methods", http.NoBody))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, methodsListPath, http.NoBody))
 
 	assertJSONError(t, rec, http.StatusNotFound, httpx.CodeNotFound)
 }
 
 // Без ACCOUNTS_URL проверять роль нечем, поэтому публичный список остаётся,
-// а PATCH не регистрируется.
-func TestMethodsPATCHIsNotRegisteredWithoutAccounts(t *testing.T) {
+// а переключение не регистрируется.
+func TestMethodsSetIsNotRegisteredWithoutAccounts(t *testing.T) {
 	st := newMemStore()
 	h := New(stubConfig(nil), st, discardLogger())
 
 	rec := httptest.NewRecorder()
-	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/methods", http.NoBody))
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, methodsListPath, http.NoBody))
 
 	if rec.Code != http.StatusOK {
 		t.Fatalf("status = %d, want 200 для публичного списка", rec.Code)
 	}
 
-	rec = patchMethod(t, h, "rsa", adminToken, `{"enabled":false}`)
+	rec = setMethod(t, h, adminToken, `{"name":"RSA-32768","enabled":false}`)
 	assertJSONError(t, rec, http.StatusNotFound, httpx.CodeNotFound)
 
 	if len(st.ops) != 0 {
 		t.Errorf("журнал = %v, want пустой", st.ops)
+	}
+}
+
+func TestRolesIsPublic(t *testing.T) {
+	h := New(stubConfig(nil), nil, discardLogger())
+
+	rec := httptest.NewRecorder()
+	h.ServeHTTP(rec, httptest.NewRequest(http.MethodGet, "/api/roles", http.NoBody))
+
+	if rec.Code != http.StatusOK {
+		t.Fatalf("status = %d, want 200 (body %q)", rec.Code, rec.Body.String())
+	}
+
+	var got []auth.RoleDTO
+	if err := json.Unmarshal(rec.Body.Bytes(), &got); err != nil {
+		t.Fatalf("decode body %q: %v", rec.Body.String(), err)
+	}
+
+	if len(got) != 2 || got[0].ID != auth.RoleUserID || got[1].Name != auth.RoleAdmin {
+		t.Errorf("body = %+v, want [user admin]", got)
 	}
 }
