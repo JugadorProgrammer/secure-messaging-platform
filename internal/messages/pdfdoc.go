@@ -36,6 +36,9 @@ func renderPDF(m *ports.Message) ([]byte, error) {
 	doc := fpdf.New("P", "mm", "A4", "")
 	doc.SetMargins(pageMarginMM, pageMarginMM, pageMarginMM)
 	doc.SetAutoPageBreak(true, pageMarginMM)
+	// Шрифты и прочие ресурсы fpdf выводит обходом map, то есть в случайном
+	// порядке. Сортировка делает вывод побайтно воспроизводимым.
+	doc.SetCatalogSort(true)
 	doc.SetCreationDate(created)
 	doc.SetModificationDate(created)
 	doc.SetCreator(pdfCreator, true)
