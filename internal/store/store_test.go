@@ -5,6 +5,7 @@ import (
 	"context"
 	"errors"
 	"io"
+	"io/fs"
 	"log/slog"
 	"os"
 	"sync"
@@ -13,6 +14,7 @@ import (
 	"time"
 
 	"github.com/JugadorProgrammer/secure-messaging-platform/internal/ports"
+	"github.com/JugadorProgrammer/secure-messaging-platform/migrations"
 )
 
 const testRSABits = 2048
@@ -86,8 +88,8 @@ func TestMigrate(t *testing.T) {
 	if err := st.pool.QueryRow(ctx, `SELECT count(*) FROM schema_migrations`).Scan(&applied); err != nil {
 		t.Fatalf("count schema_migrations: %v", err)
 	}
-	if applied != 1 {
-		t.Errorf("schema_migrations rows = %d, want 1", applied)
+	if want := migrationCount(t); applied != want {
+		t.Errorf("schema_migrations rows = %d, want %d", applied, want)
 	}
 
 	methods, err := st.Methods(ctx)
@@ -129,8 +131,8 @@ func TestMigrateConcurrent(t *testing.T) {
 	if err := st.pool.QueryRow(ctx, `SELECT count(*) FROM schema_migrations`).Scan(&applied); err != nil {
 		t.Fatalf("count schema_migrations: %v", err)
 	}
-	if applied != 1 {
-		t.Errorf("schema_migrations rows = %d, want 1", applied)
+	if want := migrationCount(t); applied != want {
+		t.Errorf("schema_migrations rows = %d, want %d", applied, want)
 	}
 }
 
@@ -873,5 +875,55 @@ func TestRestartUserKeyMissing(t *testing.T) {
 	started, err := st.RestartUserKey(t.Context(), 404, 2048, time.Now())
 	if err != nil || started {
 		t.Errorf("RestartUserKey() = %v, %v, want false, nil", started, err)
+	}
+}
+
+// migrationCount — число встроенных миграций: каждая оставляет одну строку
+// в schema_migrations.
+func migrationCount(t *testing.T) int {
+	t.Helper()
+
+	files, err := fs.Glob(migrations.FS, "*.sql")
+	if err != nil {
+		t.Fatalf("list migrations: %v", err)
+	}
+
+	return len(files)
+}
+
+func TestMessageByCiphertext(t *testing.T) {
+	st := newTestStore(t)
+	ctx := t.Context()
+
+	kuz := &ports.Message{
+		OwnerID: 7, OwnerLogin: "ivanov", Method: "kuznyechik", KeySize: 256, Plaintext: "привет",
+		Ciphertext: []byte{1, 2, 3}, KuzKeySealed: []byte{9}, KuzIV: []byte{4, 5},
+	}
+	if _, err := st.CreateMessage(ctx, kuz); err != nil {
+		t.Fatalf("CreateMessage() error = %v", err)
+	}
+
+	tests := []struct {
+		name    string
+		method  string
+		ct      []byte
+		wantErr error
+	}{
+		{"найдено по шифртексту", "kuznyechik", []byte{1, 2, 3}, nil},
+		{"другой шифртекст", "kuznyechik", []byte{1, 2}, ports.ErrNotFound},
+		{"другой метод", "rsa", []byte{1, 2, 3}, ports.ErrNotFound},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := st.MessageByCiphertext(ctx, tt.method, tt.ct)
+			if !errors.Is(err, tt.wantErr) {
+				t.Fatalf("MessageByCiphertext() error = %v, want %v", err, tt.wantErr)
+			}
+
+			if tt.wantErr == nil && (got.ID != kuz.ID || !bytes.Equal(got.KuzIV, kuz.KuzIV)) {
+				t.Errorf("MessageByCiphertext() = %+v, want message %d", got, kuz.ID)
+			}
+		})
 	}
 }

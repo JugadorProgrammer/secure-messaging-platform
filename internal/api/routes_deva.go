@@ -37,6 +37,7 @@ func registerDevA(mux *http.ServeMux, cfg Config, st ports.Store, log *slog.Logg
 	gw := newAccountsGateway(cfg, journal, log)
 
 	registerAccountsRoutes(mux, cfg, gw)
+	mux.Handle("GET /api/roles", http.HandlerFunc(auth.ListRoles))
 	registerMethodRoutes(mux, st, gw, journal, log)
 	registerOpsLogRoutes(mux, gw, st, log)
 }
@@ -99,8 +100,8 @@ func registerAccountsRoutes(mux *http.ServeMux, cfg Config, gw accountsGateway) 
 
 // registerMethodRoutes регистрирует список методов и его переключение.
 //
-// GET публичный и работает даже без настроенного Accounts: интерфейсу список
-// нужен до входа. PATCH без проверки роли не регистрируется.
+// Список публичный и работает даже без настроенного Accounts: интерфейсу он
+// нужен до входа. Переключение без проверки роли не регистрируется.
 func registerMethodRoutes(mux *http.ServeMux, st ports.Store, gw accountsGateway, journal *opslog.Logger, log *slog.Logger) {
 	if st == nil {
 		log.Error("store is not configured: methods routes are not registered")
@@ -110,14 +111,14 @@ func registerMethodRoutes(mux *http.ServeMux, st ports.Store, gw accountsGateway
 
 	h := methods.NewHandler(methods.NewService(st), journal.Log, log)
 
-	mux.Handle("GET /api/methods", http.HandlerFunc(h.List))
+	mux.Handle("GET /api/getAllEncryptionMethods", http.HandlerFunc(h.List))
 
 	if gw.admin == nil {
 		return
 	}
 
-	mux.Handle("PATCH /api/methods/{code}",
-		httpx.BodyLimit(methods.MaxPatchBodyBytes)(gw.admin(http.HandlerFunc(h.Patch))))
+	mux.Handle("POST /api/setEncryptionMethodAvailability",
+		httpx.BodyLimit(methods.MaxSetBodyBytes)(gw.admin(http.HandlerFunc(h.SetAvailability))))
 }
 
 // registerOpsLogRoutes открывает журнал администратору. Чтение возможно

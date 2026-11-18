@@ -28,9 +28,19 @@ middleware, проверки доступности. Добавлено прок
 | `POST /api/auth/logout` | выход; требует токен |
 | `GET /api/users` | список пользователей; только роль `admin` |
 | `POST /api/users` | создание пользователя; только роль `admin` |
-| `GET /api/methods` | методы шифрования с флагом `enabled`; публичный |
-| `PATCH /api/methods/{code}` | включить или выключить метод; только роль `admin` |
+| `GET /api/roles` | справочник ролей (`1` user, `2` admin); публичный |
+| `GET /api/getAllEncryptionMethods` | методы шифрования `{name, enabled}`; публичный |
+| `POST /api/setEncryptionMethodAvailability` | включить или выключить метод; только роль `admin` |
+| `POST /api/encrypt` | зашифровать текст, сохранить сообщение; требует сессию |
+| `POST /api/decrypt` | расшифровать шифртекст ключом из запроса; требует сессию |
+| `GET /api/getAllMessages` | сообщения с ключами: свои, у `admin` — все; требует сессию |
+| `POST /api/exportPdfWithSignature` | PDF своего сообщения с подписью системным ключом |
 | `GET /api/ops-log` | журнал операций; только роль `admin` |
+
+Сессия передаётся cookie `session` (её ставит Сервис авторизации) или
+заголовком `Authorization: Bearer <token>`; заголовок, если он есть, важнее.
+Методы называются так же, как в интерфейсе: `RSA-32768` и `Кузнечик`; коды
+`rsa` и `kuznyechik` тоже принимаются.
 
 Маршруты здоровья не обращаются к базе и внешним сервисам. Маршруты `/api/auth/*`
 и `/api/users` требуют `ACCOUNTS_URL`: префикс `/api` срезается, до учётных
@@ -38,10 +48,25 @@ middleware, проверки доступности. Добавлено прок
 в лог не пишутся.
 
 Маршруты методов читают таблицу `methods`, поэтому без подключённого хранилища
-не регистрируются. `PATCH` требует поле `enabled` (без него — `400`, иначе
-пропущенное поле выключило бы метод), принимает только `rsa` и `kuznyechik`
-(другой код — `404`), тело не больше 4 КиБ и пишется в `ops_log` как
-`method.toggle`.
+не регистрируются. Переключение требует поля `name` и `enabled` (без них —
+`400`, иначе пропущенное поле выключило бы метод), неизвестное имя — `404`,
+тело не больше 4 КиБ, пишется в `ops_log` как `method.toggle`.
+
+### Сообщения
+
+`POST /api/decrypt` принимает `privateKey` для RSA и `key` для Кузнечика.
+Интерфейс IV не передаёт: он берётся из сохранённого сообщения с тем же
+шифртекстом (hash-индекс `messages_ciphertext_idx`), для внешнего шифртекста
+`iv` можно передать явно. Время расшифрования записывается в метрики, только
+если сообщение принадлежит пользователю.
+
+`GET /api/getAllMessages` раскрывает ключи каждого сообщения, потому что их
+показывает интерфейс. Администратор видит все сообщения, а значит и все ключи.
+
+`POST /api/exportPdfWithSignature` отдаёт PDF только владельцу (чужое
+сообщение — `404` и запись `access.denied`). Подпись — контейнер `pdfsig v1`
+после `%%EOF` (contracts.md, раздел 7), не PAdES: просмотрщики PDF её не
+показывают. Без готового системного ключа — `503`.
 
 ### Журнал операций
 
@@ -207,6 +232,15 @@ docker compose exec postgres createdb -U coord coord_test
 $env:TEST_DSN="postgres://coord:coord_local@localhost:5432/coord_test?sslmode=disable"
 go test -race ./internal/store/...
 ```
+
+### CI
+
+`.github/workflows/coord-ci.yml` прогоняет линтер, тесты и сборку образа на
+каждой ветке `COORD-*` и PR. После влития в `COORD-develop` образ
+публикуется в Docker Hub как `<DOCKERHUB_USERNAME>/smp-coord:test`, после
+влития в `COORD-master` — как `:stable`, в обоих случаях ещё и
+`:sha-<commit>`. Нужны секреты репозитория `DOCKERHUB_USERNAME` и
+`DOCKERHUB_TOKEN` (access token Docker Hub с правом Read & Write).
 
 ## Миграции
 

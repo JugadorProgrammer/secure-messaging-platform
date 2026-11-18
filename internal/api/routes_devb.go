@@ -36,17 +36,25 @@ func WithDevB(d DevB) Option {
 	}
 }
 
-// registerDevB регистрирует маршруты Dev B: запись сообщений, дешифрование и PDF.
+// registerDevB регистрирует маршруты сообщений: шифрование, расшифрование,
+// список и PDF с подписью.
 //
-// Файл принадлежит Dev B, и Dev A его не правит. Маршрут записи требует
-// хранилище, крипто-клиент, менеджер ключей и проверку токена: без любой из
-// этих зависимостей он не регистрируется, как и маршруты Dev A без своих.
+// Маршрутам нужны хранилище с поиском по шифртексту, крипто-клиент, менеджер
+// ключей и проверка сессии: без любой из этих зависимостей они не
+// регистрируются, как и маршруты Dev A без своих.
 func registerDevB(mux *http.ServeMux, cfg Config, st ports.Store, devB *DevB, log *slog.Logger) {
 	if devB == nil || st == nil || devB.Crypto == nil || devB.Keys == nil {
 		return
 	}
 
-	// Без адреса Сервиса учётных записей токен проверить нечем. Об этом уже
+	store, ok := st.(messages.Store)
+	if !ok {
+		log.Error("store does not support message lookup: message routes are not registered")
+
+		return
+	}
+
+	// Без адреса Сервиса учётных записей сессию проверить нечем. Об этом уже
 	// пишет registerDevA, второе сообщение в логе не нужно.
 	if cfg.AccountsBase() == nil {
 		return
@@ -55,10 +63,24 @@ func registerDevB(mux *http.ServeMux, cfg Config, st ports.Store, devB *DevB, lo
 	journal := opslog.New(st, log)
 	gw := newAccountsGateway(cfg, journal, log)
 
-	write := messages.NewWriteHandler(st, devB.Crypto, devB.Keys, journal.Log, messages.WriteConfig{
+	h := messages.NewHandler(store, devB.Crypto, devB.Keys, journal.Log, messages.Config{
 		MasterKeyHex: devB.MasterKeyHex,
 		MaxTextBytes: devB.MaxMessageBytes,
 	}, log)
 
-	mux.Handle("POST /api/messages", httpx.BodyLimit(write.BodyLimit())(gw.authn(http.HandlerFunc(write.Create))))
+	routes := []struct {
+		pattern string
+		limit   int64
+		handler http.HandlerFunc
+	}{
+		{"POST /api/encrypt", h.EncryptBodyLimit(), h.Encrypt},
+		{"POST /api/decrypt", h.DecryptBodyLimit(), h.Decrypt},
+		{"POST /api/exportPdfWithSignature", h.ExportBodyLimit(), h.ExportPDF},
+	}
+
+	for _, rt := range routes {
+		mux.Handle(rt.pattern, httpx.BodyLimit(rt.limit)(gw.authn(rt.handler)))
+	}
+
+	mux.Handle("GET /api/getAllMessages", gw.authn(http.HandlerFunc(h.List)))
 }

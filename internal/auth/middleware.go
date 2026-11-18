@@ -13,6 +13,10 @@ const (
 	// headerAuthorization — заголовок с Bearer-токеном.
 	headerAuthorization = "Authorization"
 
+	// SessionCookie — cookie с токеном сессии. Её ставит Сервис учётных записей
+	// после третьего фактора, а фронт пробрасывает cookie браузера в COORD.
+	SessionCookie = "session"
+
 	// maxTokenLen — предельная длина токена: больше — точно не наш формат.
 	maxTokenLen = 4096
 
@@ -31,7 +35,9 @@ const (
 // userID == nil означает анонимного субъекта, а не нулевой идентификатор.
 type AuditFunc func(ctx context.Context, userID *int64, op, ref string, ok bool)
 
-// Authn проверяет Bearer-токен через introspect и кладёт Principal в контекст.
+// Authn проверяет токен сессии через introspect и кладёт Principal в контекст.
+// Токен берётся из заголовка Authorization: Bearer, а без заголовка — из
+// cookie session.
 //
 // Ответы различаются: отсутствие или неверный формат токена и недействительная
 // сессия дают 401, недоступность Сервиса учётных записей — 503. Токен в лог
@@ -39,7 +45,7 @@ type AuditFunc func(ctx context.Context, userID *int64, op, ref string, ok bool)
 func Authn(c *AccountsClient) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token, ok := bearerToken(r)
+			token, ok := requestToken(r)
 			if !ok {
 				httpx.WriteErr(w, http.StatusUnauthorized, httpx.CodeUnauthorized, msgUnauthorized)
 
@@ -88,6 +94,22 @@ func Require(role Role, audit AuditFunc) func(http.Handler) http.Handler {
 	}
 }
 
+// requestToken извлекает токен сессии. Заголовок Authorization важнее
+// cookie: если он есть, но неверный, cookie не проверяется, иначе явная
+// ошибка клиента скрылась бы за чужой сессией из браузера.
+func requestToken(r *http.Request) (string, bool) {
+	if len(r.Header.Values(headerAuthorization)) > 0 {
+		return bearerToken(r)
+	}
+
+	cookie, err := r.Cookie(SessionCookie)
+	if err != nil {
+		return "", false
+	}
+
+	return validToken(cookie.Value)
+}
+
 // bearerToken извлекает токен: ровно один заголовок, схема Bearer без учёта
 // регистра, непустой токен разумной длины.
 func bearerToken(r *http.Request) (string, bool) {
@@ -101,6 +123,11 @@ func bearerToken(r *http.Request) (string, bool) {
 		return "", false
 	}
 
+	return validToken(token)
+}
+
+// validToken отсекает пустой токен, токен с пробелами и заведомо длинный.
+func validToken(token string) (string, bool) {
 	token = strings.TrimSpace(token)
 	if token == "" || len(token) > maxTokenLen || strings.ContainsAny(token, " \t") {
 		return "", false
