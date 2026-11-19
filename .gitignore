@@ -426,3 +426,11 @@ FodyWeavers.xsd
 
 # Official VS Code C# Dev Kit Extension exclusion
 #*.lscache
+
+# артефакты сборки библиотеки «Кузнечик»
+# Артефакты сборки: их создаёт mingw32-make, в репозитории они не нужны.
+*.exe
+kuznyechik.dll
+libkuznyechik.dll.a
+# Поставка для команды собирается командой make dist.
+dist/
