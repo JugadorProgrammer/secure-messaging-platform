@@ -1,0 +1,12 @@
+[
+  {"op": "gcd", "args": [48, 18], "expected": 6},
+  {"op": "gcd", "args": [0, 0], "expected": 0},
+  {"op": "lcm", "args": [60, 52], "expected": 780},
+  {"op": "lcm", "args": [0, 5], "expected": 0},
+  {"op": "mod_inverse", "args": [17, 780], "expected": 413},
+  {"op": "mod_pow", "args": [65, 17, 3233], "expected": 2790},
+  {"op": "mod_pow", "args": [2, 5, 12], "expected": 8},
+  {"op": "mod_pow", "args": [0, 0, 7], "expected": 1},
+  {"op": "mod_pow", "args": [0, 0, 1], "expected": 0},
+  {"op": "mod_pow", "args": [0, 5, 7], "expected": 0}
+]

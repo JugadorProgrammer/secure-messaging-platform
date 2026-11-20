@@ -1,0 +1,17 @@
+{
+  "key_source": "json",
+  "key_check": "parameter_relations_only",
+  "generation_seconds": null,
+  "load_seconds": 0.02891094400001748,
+  "bits": 32768,
+  "operations_seconds": {
+    "rsaep": 0.09925608200046554,
+    "rsadp_reference": 54.48271935199955,
+    "rsadp_crt": 18.221367963000375,
+    "rsasp1": 18.092174183999305,
+    "rsavp1": 0.10380241500024567
+  },
+  "peak_rss_mib": 14.875,
+  "python": "3.12.14",
+  "platform": "Linux-6.18.57-x86_64-with-glibc2.41"
+}
